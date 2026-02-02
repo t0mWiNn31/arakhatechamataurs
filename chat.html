@@ -29,7 +29,10 @@
         <input type="text" id="msg" placeholder="စာရိုက်ပါ..." onkeypress="if(event.key==='Enter')send()">
         <button id="sendBtn" onclick="send()">ပို့မည်</button>
     </div>
-    <button onclick="doLogout()" style="width:100%; padding: 10px; background: #eee; border:none; cursor:pointer;">ထွက်မည် (Logout)</button>
+    <button onclick="firebase.auth().signOut().then(() => { window.location.href='index.html'; })" 
+        style="width:100%; padding: 10px; background: #eee; border:none; cursor:pointer; margin-top:10px;">
+    ထွက်မည် (Logout)
+</button>
 </div>
 
 <script>
