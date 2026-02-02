@@ -1,46 +1,46 @@
+
 <!DOCTYPE html>
 <html lang="my">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>First Arakha Chat</title>
+    <title>Arakha Chat</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
     <style>
         body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 330px; text-align: center; }
+        .container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 320px; text-align: center; }
         input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         button { width: 100%; padding: 12px; background: #0084ff; border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: bold; }
-        #messages { height: 300px; overflow-y: auto; border: 1px solid #eee; padding: 10px; margin-bottom: 10px; background: #fafafa; text-align: left; }
-        .msg { margin-bottom: 8px; padding: 8px; border-radius: 8px; background: #e4e6eb; font-size: 14px; word-wrap: break-word; }
+        #messages { height: 250px; overflow-y: auto; border: 1px solid #eee; padding: 10px; margin-bottom: 10px; background: #fafafa; text-align: left; border-radius: 8px; }
+        .msg { margin-bottom: 8px; padding: 8px; border-radius: 8px; background: #e4e6eb; font-size: 14px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="login-section">
-        <h2 id="title">အကောင့်ဝင်ပါ</h2>
-        <input type="email" id="email" placeholder="အီးမေးလ်">
-        <input type="password" id="password" placeholder="လျှို့ဝှက်နံပါတ်">
-        <button onclick="handleAuth()">ဝင်မည် / ဖွင့်မည်</button>
-        <p onclick="toggleMode()" id="toggleBtn" style="color:#0084ff; cursor:pointer; font-size:13px; margin-top:15px;">အကောင့်အသစ်ဖွင့်ရန် ပြောင်းပါ</p>
+        <h2>အကောင့်ဝင်ပါ</h2>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <button id="authBtn">ဝင်မည် / ဖွင့်မည်</button>
+        <p id="toggleBtn" style="color:#0084ff; cursor:pointer; font-size:12px; margin-top:10px;">အကောင့်အသစ်ဖွင့်ရန် ပြောင်းပါ</p>
     </div>
 
     <div id="chat-section" style="display:none;">
-        <h3 style="color:#0084ff;">Arakha Chat ✅</h3>
+        <h3 style="color:#0084ff;">Chat Room ✅</h3>
         <div id="messages"></div>
         <div style="display: flex; gap: 5px;">
             <input type="text" id="msgInput" placeholder="စာရိုက်ပါ..." style="margin:0;">
-            <button onclick="sendMessage()" style="width: 70px;">ပို့</button>
+            <button id="sendBtn" style="width: 60px;">ပို့</button>
         </div>
-        <button onclick="firebase.auth().signOut()" style="background:#ff4444; margin-top:10px; font-size: 11px;">Logout ထွက်မည်</button>
+        <button id="logoutBtn" style="background:#ff4444; margin-top:10px; font-size: 11px;">Logout</button>
     </div>
 </div>
 
 <script>
-    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyCpIv3avDNRYNrmrzKdMqfnMdNzBGZAPow",
         authDomain: "firstarakha.firebaseapp.com",
@@ -56,55 +56,48 @@
 
     let isLoginMode = true;
 
-    function toggleMode() {
+    document.getElementById('toggleBtn').onclick = () => {
         isLoginMode = !isLoginMode;
-        document.getElementById('title').innerText = isLoginMode ? "အကောင့်ဝင်ပါ" : "အကောင့်အသစ်ဖွင့်ပါ";
+        document.querySelector('h2').innerText = isLoginMode ? "အကောင့်ဝင်ပါ" : "အကောင့်အသစ်ဖွင့်ပါ";
         document.getElementById('toggleBtn').innerText = isLoginMode ? "အကောင့်အသစ်ဖွင့်ရန် ပြောင်းပါ" : "အကောင့်ရှိပြီးသားလား? ဝင်မည်";
-    }
+    };
 
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            document.getElementById('login-section').style.display = 'none';
-            document.getElementById('chat-section').style.display = 'block';
-            loadMessages();
-        } else {
-            document.getElementById('login-section').style.display = 'block';
-            document.getElementById('chat-section').style.display = 'none';
-        }
-    });
-
-    function handleAuth() {
+    document.getElementById('authBtn').onclick = () => {
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
-        if(!email || !password) return alert("ဖြည့်ပါဦး ကိုကိုရယ်");
-
-if (isLoginMode) {
+        if (isLoginMode) {
             auth.signInWithEmailAndPassword(email, password).catch(e => alert(e.message));
         } else {
             auth.createUserWithEmailAndPassword(email, password).catch(e => alert(e.message));
         }
-    }
+    };
 
-    function sendMessage() {
-        const msg = document.getElementById('msgInput').value;
-        if (msg && auth.currentUser) {
+    auth.onAuthStateChanged(user => {
+        document.getElementById('login-section').style.display = user ? 'none' : 'block';
+        document.getElementById('chat-section').style.display = user ? 'block' : 'none';
+        if (user) loadMessages();
+    });
+
+    document.getElementById('sendBtn').onclick = () => {
+
+const msg = document.getElementById('msgInput').value;
+        if (msg) {
             db.ref("global_messages").push({
                 sender: auth.currentUser.email.split('@')[0],
-                text: msg,
-                time: firebase.database.ServerValue.TIMESTAMP
+                text: msg
             });
             document.getElementById('msgInput').value = "";
         }
-    }
+    };
+
+    document.getElementById('logoutBtn').onclick = () => auth.signOut();
 
     function loadMessages() {
         const msgBox = document.getElementById('messages');
-        db.ref("global_messages").limitToLast(50).on("child_added", snap => {
+        msgBox.innerHTML = "";
+        db.ref("global_messages").limitToLast(20).on("child_added", snap => {
             const data = snap.val();
-            const div = document.createElement('div');
-            div.className = 'msg';
-            div.innerHTML = <b>${data.sender}</b>: ${data.text};
-            msgBox.appendChild(div);
+            msgBox.innerHTML += <div class="msg"><b>${data.sender}</b>: ${data.text}</div>;
             msgBox.scrollTop = msgBox.scrollHeight;
         });
     }
