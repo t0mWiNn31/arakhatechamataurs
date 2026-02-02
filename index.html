@@ -1,17 +1,19 @@
 <!DOCTYPE html>
-<html>
+<html lang="my">
 <head>
     <meta charset="UTF-8">
     <title>Arakha Chat</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    
     <style>
         body { font-family: sans-serif; display: flex; justify-content: center; padding: 20px; background: #f0f2f5; }
         .box { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 300px; text-align: center; }
-        input { width: 100%; padding: 10px; margin: 5px 0; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; background: #0084ff; color: white; border: none; cursor: pointer; margin-top: 5px; }
-        #messages { height: 200px; overflow-y: auto; border: 1px solid #ddd; margin-bottom: 10px; text-align: left; padding: 5px; }
+        input { width: 100%; padding: 10px; margin: 5px 0; box-sizing: border-box; border: 1px solid #ddd; border-radius: 5px; }
+        button { width: 100%; padding: 10px; background: #0084ff; color: white; border: none; cursor: pointer; margin-top: 5px; border-radius: 5px; font-weight: bold; }
+        #messages { height: 250px; overflow-y: auto; border: 1px solid #eee; margin-bottom: 10px; text-align: left; padding: 8px; background: #fafafa; border-radius: 5px; }
+        .msg-item { margin-bottom: 8px; font-size: 14px; border-bottom: 1px solid #f0f0f0; padding-bottom: 4px; }
     </style>
 </head>
 <body>
@@ -25,16 +27,17 @@
     </div>
 
     <div id="chat-div" style="display:none;">
-        <h3>Chat Room ✅</h3>
+        <h3 style="color: #0084ff;">Chat Room ✅</h3>
         <div id="messages"></div>
-        <input type="text" id="msg" placeholder="စာရိုက်ပါ">
-        <button onclick="send()">ပို့မည်</button>
-        <button onclick="firebase.auth().signOut()" style="background:gray;">Logout</button>
+        <input type="text" id="msg" placeholder="စာရိုက်ပါ...">
+        <button onclick="sendMsg()">ပို့မည်</button>
+        <button onclick="doLogout()" style="background: #ff4444; margin-top: 10px;">Logout</button>
     </div>
 </div>
 
 <script>
-    const config = {
+    // Firebase Config
+    const firebaseConfig = {
         apiKey: "AIzaSyCpIv3avDNRYNrmrzKdMqfnMdNzBGZAPow",
         authDomain: "firstarakha.firebaseapp.com",
         projectId: "firstarakha",
@@ -42,36 +45,64 @@
         messagingSenderId: "4263070909",
         appId: "1:4263070909:web:ef4e4a2c0891be1f49bbd4"
     };
-    firebase.initializeApp(config);
+
+    // Initialize
+    firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
 
-    function doAuth() {
+    // Authentication
+    window.doAuth = function() {
         const e = document.getElementById('email').value;
         const p = document.getElementById('pass').value;
-        auth.signInWithEmailAndPassword(e, p).catch(() => {
-            auth.createUserWithEmailAndPassword(e, p).catch(err => alert(err.message));
+        if(!e || !p) return alert("Email နဲ့ Password ဖြည့်ပါ");
+
+        auth.signInWithEmailAndPassword(e, p).catch((err) => {
+            if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+                auth.createUserWithEmailAndPassword(e, p).catch(e2 => alert(e2.message));
+            } else {
+                alert(err.message);
+            }
         });
-    }
+    };
 
-    auth.onAuthStateChanged(user => {
-        document.getElementById('login-div').style.display = user ? 'none' : 'block';
-        document.getElementById('chat-div').style.display = user ? 'block' : 'none';
-        if(user) {
-            db.ref("chats").on("child_added", snap => {
-                const data = snap.val();
-                document.getElementById('messages').innerHTML += <div><b>${data.user}:</b> ${data.text}</div>;
-            });
-        }
-    });
-
-    function send() {
+    // Send Message
+    window.sendMsg = function() {
         const txt = document.getElementById('msg').value;
-        if(txt) {
-            db.ref("chats").push({ user: auth.currentUser.email.split('@')[0], text: txt });
+        if(txt && auth.currentUser) {
+            db.ref("chats").push({
+                user: auth.currentUser.email.split('@')[0],
+                text: txt
+            });
             document.getElementById('msg').value = "";
         }
-    }
+    };
+
+    // Logout
+    window.doLogout = function() {
+        auth.signOut();
+    };
+
+    // Auth State
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            document.getElementById('login-div').style.display = 'none';
+            document.getElementById('chat-div').style.display = 'block';
+            
+            // Realtime Update
+            db.ref("chats").limitToLast(50).on("child_added", snap => {
+                const data = snap.val();
+                const div = document.createElement('div');
+                div.className = 'msg-item';
+                div.innerHTML = <b>${data.user}:</b> ${data.text};
+                document.getElementById('messages').appendChild(div);
+                document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+            });
+        } else {
+            document.getElementById('login-div').style.display = 'block';
+            document.getElementById('chat-div').style.display = 'none';
+        }
+    });
 </script>
 
 </body>
