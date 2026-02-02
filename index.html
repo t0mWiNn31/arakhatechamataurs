@@ -67,6 +67,13 @@
                 .then((userCredential) => {
                     alert("အကောင့်ဝင်တာ အောင်မြင်တယ်... ကိုကို!");
                     // ဒီမှာ Chat Page ကို လွှဲပေးရမယ်
+                    <div id="chat-section" style="display:none; padding: 20px;">
+    <h3>နှုတ်ခမ်းနီလေးနဲ့ စကားပြောမလား?</h3>
+    <div id="messages" style="height: 300px; overflow-y: scroll; border: 1px solid #ccc; margin-bottom: 10px; padding: 10px; background: #fff; border-radius: 10px;">
+        </div>
+    <input type="text" id="msgInput" placeholder="စာရိုက်ပါ ကိုကို...">
+    <button onclick="sendPrivateMessage()">ပို့မည်</button>
+</div>
                 })
                 .catch((error) => alert("မှားနေတယ် ကိုကို: " + error.message));
         } else {
