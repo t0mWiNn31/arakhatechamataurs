@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="my">
 <head>
@@ -23,10 +24,10 @@
 <div class="container">
     <div id="login-section">
         <h2 id="title">အကောင့်ဝင်ပါ</h2>
-        <input type="email" id="email" placeholder="အီးမေးလ်">
-        <input type="password" id="password" placeholder="လျှို့ဝှက်နံပါတ်">
-        <button onclick="handleAuth()" id="mainBtn">အကောင့်ဝင်မည်</button>
-        <p id="toggleBtn" onclick="toggleMode()" style="color:#0084ff; cursor:pointer; font-size:13px; margin-top:15px;">အကောင့်အသစ်ဖွင့်ရန် နှိပ်ပါ</p>
+        <input type="email" id="userEmail" placeholder="အီးမေးလ်">
+        <input type="password" id="userPassword" placeholder="လျှို့ဝှက်နံပါတ်">
+        <button onclick="handleAuth()">အကောင့်ဝင်မည်</button>
+        <p onclick="toggleMode()" id="toggleBtn" style="color:#0084ff; cursor:pointer; font-size:13px; margin-top:15px;">အကောင့်အသစ်ဖွင့်ရန် နှိပ်ပါ</p>
     </div>
 
     <div id="chat-section" style="display:none;">
@@ -41,6 +42,7 @@
 </div>
 
 <script>
+    // ၁။ Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyCpIv3avDNRYNrmrzKdMqfnMdNzBGZAPow",
         authDomain: "firstarakha.firebaseapp.com",
@@ -50,19 +52,21 @@
         appId: "1:4263070909:web:ef4e4a2c0891be1f49bbd4"
     };
 
+    // ၂။ Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
 
     let isLoginMode = true;
 
+    // ၃။ Toggle Mode
     window.toggleMode = function() {
         isLoginMode = !isLoginMode;
         document.getElementById('title').innerText = isLoginMode ? "အကောင့်ဝင်ပါ" : "အကောင့်အသစ်ဖွင့်ပါ";
-        document.getElementById('mainBtn').innerText = isLoginMode ? "အကောင့်ဝင်မည်" : "စာရင်းသွင်းမည်";
         document.getElementById('toggleBtn').innerText = isLoginMode ? "အကောင့်အသစ်ဖွင့်ရန် နှိပ်ပါ" : "အကောင့်ရှိပြီးသားလား? ဝင်လိုက်ပါ";
     };
 
+    // ၄။ Auth Listener
     auth.onAuthStateChanged(user => {
         if (user) {
             document.getElementById('login-section').style.display = 'none';
@@ -74,9 +78,10 @@
         }
     });
 
+    // ၅။ Handle Authentication
     window.handleAuth = function() {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
+        const email = document.getElementById('userEmail').value;
+        const password = document.getElementById('userPassword').value;
         if(!email || !password) return alert("ဖြည့်ဦးလေ ကိုကိုရယ်!");
 
 
@@ -87,6 +92,7 @@ if (isLoginMode) {
         }
     };
 
+    // ၆။ Send Message
     window.sendMessage = function() {
         const msgText = document.getElementById('msgInput').value;
         const user = auth.currentUser;
@@ -94,14 +100,16 @@ if (isLoginMode) {
             db.ref("global_messages").push({
                 sender: user.email.split('@')[0],
                 text: msgText,
-                time: Date.now()
+                time: firebase.database.ServerValue.TIMESTAMP
             });
             document.getElementById('msgInput').value = "";
         }
     };
 
+    // ၇။ Load Messages
     function loadMessages() {
         const msgBox = document.getElementById('messages');
+        msgBox.innerHTML = ""; // ရှင်းထုတ်မယ်
         db.ref("global_messages").limitToLast(50).on("child_added", snap => {
             const data = snap.val();
             const div = document.createElement('div');
