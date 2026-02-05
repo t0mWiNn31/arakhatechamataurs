@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arakha Forum - နည်းပညာဆွေးနွေးပွဲ</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #0d0d0d; color: #e0e0e0; font-family: 'Pyidaungsu', 'Segoe UI', sans-serif; }
+        .nav { background: #1a1a1a; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00ff41; }
+        .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
+        
+        /* Post Input Box */
+        .post-box { background: #1a1a1a; padding: 20px; border-radius: 8px; border: 1px solid #333; margin-bottom: 30px; }
+        input, textarea { width: 100%; background: #000; border: 1px solid #444; color: #00ff41; padding: 12px; margin-bottom: 10px; border-radius: 5px; outline: none; }
+        button { background: #00ff41; color: #000; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 5px; }
+        
+        /* Feed */
+        .post-card { background: #1a1a1a; padding: 20px; border-radius: 8px; border-left: 4px solid #00ff41; margin-bottom: 15px; transition: 0.3s; }
+        .post-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,255,65,0.1); }
+        .post-title { color: #00ff41; font-size: 1.2rem; margin-bottom: 8px; font-weight: bold; }
+        .post-content { font-size: 15px; line-height: 1.6; color: #ccc; margin-bottom: 12px; }
+        .post-meta { font-size: 11px; color: #666; border-top: 1px solid #333; pt: 8px; display: flex; justify-content: space-between; }
+        
+        .header-title { color: #00ff41; font-weight: bold; font-size: 1.5rem; text-transform: uppercase; letter-spacing: 2px; }
+    </style>
+</head>
+<body>
+
+<div class="nav">
+    <div class="header-title">ARAKHA_FORUM</div>
+    <div>
+        <button onclick="location.href='chat.html'" style="background:none; color:#00ff41; border:1px solid #00ff41; margin-right:10px;">CHAT ROOM</button>
+        <button onclick="firebase.auth().signOut()">LOGOUT</button>
+    </div>
+</div>
+
+<div class="container">
+    <div class="post-box">
+        <h3 style="color:#00ff41; margin-bottom:15px;">စာသစ်တင်မည်</h3>
+        <input type="text" id="postTitle" placeholder="ခေါင်းစဉ် (ဥပမာ - နည်းပညာအကြောင်း)">
+        <textarea id="postContent" rows="3" placeholder="ဘာတွေဆွေးနွေးချင်လဲ ရေးပါ..."></textarea>
+        <button onclick="createPost()">POST တင်မည်</button>
+    </div>
+
+    <div id="forum-feed">
+        <p style="text-align:center; color:#666;">ပို့စ်များကို ဆွဲတင်နေသည်...</p>
+    </div>
+</div>
+
+<script>
+    const config = {
+        apiKey: "AIzaSyCpIv3avDNRYNrmrzKdMqfnMdNzBGZAPow",
+        authDomain: "firstarakha.firebaseapp.com",
+        projectId: "firstarakha",
+        databaseURL: "https://firstarakha-default-rtdb.asia-southeast1.firebasedatabase.app",
+        appId: "1:4263070909:web:ef4e4a2c0891be1f49bbd4"
+    };
+    firebase.initializeApp(config);
+    const db = firebase.database();
+
+    // Auth Watcher
+    firebase.auth().onAuthStateChanged(user => {
+        if (!user) { location.href = "index.html"; }
+        else { loadPosts(); }
+    });
+
+    // Create Post Function
+    function createPost() {
+        const title = document.getElementById('postTitle').value;
+        const content = document.getElementById('postContent').value;
+        const user = firebase.auth().currentUser;
+
+        if(title && content && user) {
+            db.ref("forum_posts").push({
+                title: title,
+                content: content,
+                author: user.email.split('@')[0],
+                timestamp: Date.now()
+            }).then(() => {
+                document.getElementById('postTitle').value = "";
+                document.getElementById('postContent').value = "";
+            });
+        } else {
+            alert("ခေါင်းစဉ်နဲ့ အကြောင်းအရာ ပြည့်စုံအောင် ဖြည့်ပါ ကိုကို");
+        }
+    }
+
+    // Load Posts from Firebase
+    function loadPosts() {
+        const feed = document.getElementById('forum-feed');
+        db.ref("forum_posts").orderByChild("timestamp").on("value", snap => {
+            feed.innerHTML = "";
+            let posts = [];
+            snap.forEach(child => { posts.push(child.val()); });
+            posts.reverse().forEach(data => {
+                const date = new Date(data.timestamp).toLocaleString();
+                feed.innerHTML += `
+                    <div class="post-card">
+                        <div class="post-title">${data.title}</div>
+                        <div class="post-content">${data.content}</div>
+                        <div class="post-meta">
+                            <span>BY: ${data.author.toUpperCase()}</span>
+                            <span>DATE: ${date}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        });
+    }
+</script>
+
+</body>
+</html>
