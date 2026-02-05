@@ -3,37 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arakha Chat - အိမ်သို့</title>
+    <title>Arakha Community - Login</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background: linear-gradient(135deg, #0084ff, #00c6ff); height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .hero-container { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); width: 350px; text-align: center; }
-        .logo { font-size: 50px; margin-bottom: 10px; }
-        h1 { color: #333; font-size: 24px; margin-bottom: 5px; }
-        p { color: #666; font-size: 14px; margin-bottom: 25px; }
-        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; outline: none; }
-        button { width: 100%; padding: 12px; background: #0084ff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #0066cc; }
-        .footer-link { margin-top: 20px; font-size: 12px; color: #888; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            background-color: #0a0a0a; 
+            color: #00ff41; 
+            font-family: 'Courier New', monospace; 
+            height: 100vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+        }
+        .login-card { 
+            background: #111; 
+            padding: 40px; 
+            border: 1px solid #333; 
+            border-radius: 10px; 
+            width: 100%; 
+            max-width: 350px; 
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
+        }
+        .brand { font-size: 24px; font-weight: bold; margin-bottom: 30px; letter-spacing: 3px; }
+        input { 
+            width: 100%; 
+            background: #000; 
+            border: 1px solid #444; 
+            color: #00ff41; 
+            padding: 12px; 
+            margin-bottom: 15px; 
+            outline: none; 
+            font-family: inherit;
+        }
+        button { 
+            width: 100%; 
+            background: #00ff41; 
+            color: #000; 
+            border: none; 
+            padding: 12px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-family: inherit;
+            transition: 0.3s;
+        }
+        button:hover { background: #00cc33; box-shadow: 0 0 10px #00ff41; }
+        .loading { font-size: 12px; margin-top: 15px; display: none; }
     </style>
 </head>
 <body>
 
-<div class="hero-container">
-    <div class="logo">💬</div>
-    <h1>Arakha Chat</h1>
-    <p>သီးသန့်စကားပြောခန်းသို့ ကြိုဆိုပါသည်</p>
+<div class="login-card">
+    <div class="brand">ARAKHA_SYS</div>
+    <div style="margin-bottom: 20px; font-size: 14px; color: #888;">ACCESS_POINT: FORUM</div>
     
-    <input type="email" id="email" placeholder="အီးမေးလ်">
-    <input type="password" id="pass" placeholder="လျှို့ဝှက်နံပါတ်">
-    <button onclick="login()">ဝင်မည် / အကောင့်ဖွင့်မည်</button>
+    <input type="email" id="email" placeholder="ENTER_EMAIL">
+    <input type="password" id="pass" placeholder="ENTER_PASSWORD">
     
-    <div class="footer-link">Developed by Arakha Dev</div>
+    <button onclick="login()">EXECUTE LOGIN</button>
+    <div id="status" class="loading">CONNECTING_TO_SERVER...</div>
 </div>
 
 <script>
+    // Firebase Config (ကိုကို့ Project အချက်အလက်တွေပါ)
     const config = {
         apiKey: "AIzaSyCpIv3avDNRYNrmrzKdMqfnMdNzBGZAPow",
         authDomain: "firstarakha.firebaseapp.com",
@@ -45,18 +79,36 @@
     function login() {
         const e = document.getElementById('email').value;
         const p = document.getElementById('pass').value;
-        firebase.auth().signInWithEmailAndPassword(e, p).then(() => {
-            window.location.href = "chat.html"; // Login အောင်မြင်ရင် chat စာမျက်နှာသွားမယ်
-        }).catch(() => {
-            firebase.auth().createUserWithEmailAndPassword(e, p).then(() => {
-                window.location.href = "chat.html";
-            }).catch(err => alert(err.message));
-        });
+        const status = document.getElementById('status');
+
+        if(!e || !p) { alert("အီးမေးလ်နဲ့ လျှို့ဝှက်နံပါတ် ရိုက်ပါ ကိုကို!"); return; }
+
+        status.style.display = "block";
+
+        // အကောင့်ဝင်ရန် ကြိုးစားခြင်း
+        firebase.auth().signInWithEmailAndPassword(e, p)
+            .then(() => {
+                // အောင်မြင်ရင် forum.html ကို သွားမယ်
+                window.location.replace("forum.html");
+            })
+            .catch(() => {
+                // အကောင့်မရှိရင် အသစ်ဖွင့်ပေးမယ်
+                firebase.auth().createUserWithEmailAndPassword(e, p)
+                    .then(() => {
+                        window.location.replace("forum.html");
+                    })
+                    .catch(err => {
+                        alert("Error: " + err.message);
+                        status.style.display = "none";
+                    });
+            });
     }
 
-    // Login ဝင်ထားပြီးသားဆိုရင် chat ထဲ တန်းပို့မယ်
+    // Login ဝင်ထားပြီးသားဖြစ်နေရင် Forum ကို တန်းပို့မယ်
     firebase.auth().onAuthStateChanged(user => {
-        if(user) window.location.href = "forum.html";
+        if(user) {
+            window.location.replace("forum.html");
+        }
     });
 </script>
 
