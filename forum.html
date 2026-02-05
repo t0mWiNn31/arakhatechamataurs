@@ -31,10 +31,10 @@
 
 <div class="container">
     <div class="post-input">
-        <h3 style="margin:0; color:#00ff41">မေးချင်တာမေး ဆွေးနွေးချင်တာဆွေး</h3>
-        <input type="text" id="t" placeholder="ခေါင်းစဉ်">
+        <h3 style="margin:0; color:#00ff41">ရက္ခိုင်သားအချင်းချင်း ပွင့်ပွင့်လင်းလင်းဆွေးနွေးကတ်မေ</h3>
+        <input type="text" id="t" placeholder="ဂေါင်းစိုင်">
         <textarea id="c" rows="3" placeholder="အကြောင်းအရာ..."></textarea>
-        <button onclick="post()">POST တင်မည်</button>
+        <button onclick="post()">POST တင်မေ</button>
     </div>
     <div id="feed"></div>
 </div>
@@ -90,7 +90,7 @@
     function like(key, count) { db.ref("posts/" + key).update({ likes: count + 1 }); }
 
     function logout() {
-        if(confirm("အကောင့်ထဲကနေ ထွက်မှာ သေချာလား ကိုကို?")) {
+        if(confirm("လားပါဖို့ယာလား?")) {
             firebase.auth().signOut().then(() => { window.location.href = "index.html"; });
         }
     }
