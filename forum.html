@@ -25,8 +25,11 @@
 
 <div class="nav">
     <b style="color:#00ff41">ARAKHA_FORUM</b>
-    <span id="user-display" style="font-size:12px"></span>
-    <button onclick="logout()" style="background:#ff4444; color:#fff; padding:5px 10px; margin:0">LOGOUT</button>
+    <div style="font-size: 11px; display: flex; gap: 15px;">
+        <span>ONLINE: <b id="online-count" style="color:#00ff41">0</b></span>
+        <span>TOTAL: <b id="total-count" style="color:#00ff41">0</b></span>
+    </div>
+    <button onclick="logout()">LOGOUT</button>
 </div>
 
 <div class="container">
