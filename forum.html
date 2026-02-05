@@ -12,20 +12,19 @@
         .nav { background: #111; padding: 10px 15px; border-bottom: 1px solid #00ff41; position: sticky; top: 0; z-index: 100; }
         .nav-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .nav-tabs { display: flex; gap: 20px; border-top: 1px solid #222; padding-top: 8px; }
-        .tab { font-size: 13px; color: #888; cursor: pointer; padding: 5px 0; border-bottom: 2px solid transparent; transition: 0.3s; }
+        .tab { font-size: 13px; color: #888; cursor: pointer; padding: 5px 0; border-bottom: 2px solid transparent; }
         .tab.active { color: #00ff41; border-bottom: 2px solid #00ff41; }
-        
         .container { max-width: 700px; margin: 20px auto; padding: 10px; }
         .post-input { background: #111; padding: 20px; border: 1px solid #333; margin-bottom: 20px; border-radius: 8px; }
         input, textarea { width: 100%; background: #000; border: 1px solid #444; color: #fff; padding: 12px; margin-top: 10px; outline: none; box-sizing: border-box; }
         button { background: #00ff41; color: #000; border: none; padding: 10px 15px; cursor: pointer; font-weight: bold; margin-top: 10px; border-radius: 4px; }
-        
-        .card { background: #161616; padding: 20px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #222; animation: fadeIn 0.5s; }
+        .card { background: #161616; padding: 20px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #222; }
         .user { color: #00ff41; font-weight: bold; font-size: 12px; }
         .title { font-size: 18px; color: #fff; margin: 10px 0; }
+        .action-bar { border-top: 1px solid #222; margin-top: 15px; padding-top: 10px; display: flex; gap: 20px; font-size: 13px; }
+        .like-btn { cursor: pointer; color: #00ff41; }
+        .reply-box { margin-top: 10px; padding-left: 15px; border-left: 2px solid #333; }
         .ai-box { background: rgba(0, 255, 65, 0.05); border: 1px dashed #00ff41; padding: 12px; margin-top: 15px; font-size: 13px; border-radius: 4px; }
-        
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -39,10 +38,9 @@
         <div id="user-display" style="font-size: 12px; color: #00ff41;"></div>
         <button onclick="logout()" style="background:#ff4444; color:#fff; padding:5px 10px; margin:0; font-size: 11px;">LOGOUT</button>
     </div>
-    
     <div class="nav-tabs">
-        <div class="tab active" id="tab-latest" onclick="switchTab('latest')">နောက်ဆုံးတင်ခဲ့တာ</div>
-        <div class="tab" id="tab-popular" onclick="switchTab('popular')">နာမည်ကြီး (Popular)</div>
+        <div class="tab active" id="tab-latest" onclick="switchTab('latest')">နောက်ဆုံးတင်ခစာ</div>
+        <div class="tab" id="tab-popular" onclick="switchTab('popular')">အူး..နာမည်ကြီး (Popular)</div>
     </div>
 </div>
 
@@ -57,7 +55,6 @@
 </div>
 
 <script>
-    // --- (၁) FIREBASE CONFIG ---
     const config = {
         apiKey: "AIzaSyCpIv3avDNRYNrmrzKdMqfnMdNzBGZAPow",
         authDomain: "firstarakha.firebaseapp.com",
@@ -70,54 +67,49 @@
     let currentUsername = "";
     let currentTab = 'latest';
 
-    // --- (၂) ဗျာလ် (BYAL) AI FUNCTION ---
+    // --- AI FUNCTION ---
     async function askGemini(question) {
-        // အရေးကြီး - ဒီနေရာမှာ ကိုကို့ရဲ့ Gemini API Key ကို ထည့်ပါ
         const GEMINI_API_KEY = "AIzaSyCO6AnWclvWyByCcRjsenFOTgwEQh_gyXs"; 
-        
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-
         try {
             const res = await fetch(url, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: "မင်းရဲ့နာမည်က 'ဗျာလ် (Byal)' ဖြစ်တယ်။ မင်းက ရက္ခိုင်နည်းပညာဖိုရမ်တစ်ခုရဲ့ အသိဉာဏ်ကြီးမားတဲ့ AI တစ်ဦးဖြစ်တယ်။ မြန်မာလိုပဲ တိုတိုနဲ့ လိုရင်းကို ဖြေပေးပါ။ မေးခွန်းက - " + question }] }]
-                })
+                body: JSON.stringify({ contents: [{ parts: [{ text: "မင်းနာမည်က ဗျာလ် (Byal) ဖြစ်တယ်။ ရက္ခိုင်နည်းပညာ AI အနေနဲ့ တိုတိုနဲ့ လိုရင်းဖြေပေးပါ။ မေးခွန်း - " + question }] }] })
             });
             const data = await res.json();
             return data.candidates[0].content.parts[0].text;
-        } catch (e) {
-            return "ဗျာလ် အခုလောလောဆယ် အနားယူနေပါတယ်ခင်ဗျာ။";
-        }
+        } catch (e) { return "ဗျာလ် အနားယူနီပါရေ"; }
     }
 
-    // --- (၃) POST တင်သည့်စနစ် ---
+    // --- POST စနစ် ---
     async function post() {
         const t = document.getElementById('t').value, c = document.getElementById('c').value;
-        const btn = document.getElementById('post-btn');
-
         if(t && c) {
-            btn.innerText = "ဗျာလ် စဉ်းစားနေသည်...";
-            btn.disabled = true;
-
+            const btn = document.getElementById('post-btn');
+            btn.innerText = "ဗျာလ် စဉ်းစားနီပါရေ..."; btn.disabled = true;
             const aiResponse = await askGemini(c); 
-
-            db.ref("posts").push({ 
-                u: currentUsername, t: t, c: c, 
-                ai: aiResponse, 
-                time: Date.now(),
-                views: Math.floor(Math.random() * 10) // Popular စမ်းသပ်ရန် view အနည်းငယ် ထည့်ပေးထားခြင်း
-            });
-
-            document.getElementById('t').value = ""; 
-            document.getElementById('c').value = "";
-            btn.innerText = "POST တင်မေ";
-            btn.disabled = false;
+            db.ref("posts").push({ u: currentUsername, t: t, c: c, ai: aiResponse, time: Date.now(), likes: 0 });
+            document.getElementById('t').value = ""; document.getElementById('c').value = "";
+            btn.innerText = "POST တင်မေ"; btn.disabled = false;
         }
     }
 
-    // --- (၄) ပို့စ်များပြသခြင်း ---
+    // --- LIKE စနစ် ---
+    function like(id) {
+        const ref = db.ref("posts/" + id + "/likes");
+        ref.transaction(c => (c || 0) + 1);
+    }
+
+    // --- REPLY စနစ် ---
+    function reply(id) {
+        const rText = prompt("ပြောကြည့်ဇမ် -");
+        if(rText) {
+            db.ref("posts/" + id + "/replies").push({ u: currentUsername, m: rText });
+        }
+    }
+
+    // --- LOAD စနစ် ---
     function load() {
         db.ref("posts").on("value", s => {
             const feed = document.getElementById('feed');
@@ -125,65 +117,62 @@
             let items = [];
             s.forEach(child => { items.push({ key: child.key, ...child.val() }); });
 
-            // Tab အလိုက် Sort လုပ်ခြင်း
-            if (currentTab === 'latest') {
-                items.reverse();
-            } else {
-                items.sort((a, b) => (b.views || 0) - (a.views || 0));
-            }
+            if (currentTab === 'latest') items.reverse();
+            else items.sort((a, b) => (b.likes || 0) - (a.likes || 0));
 
             items.forEach(p => {
+                let repliesHTML = "";
+                if(p.replies) {
+                    Object.values(p.replies).forEach(r => {
+                        repliesHTML += `<div style="font-size:12px; margin-top:5px;"><b style="color:#00ff41">@${r.u}:</b> ${r.m}</div>`;
+                    });
+                }
+
                 const card = document.createElement('div');
                 card.className = "card";
                 card.innerHTML = `
-                    <div class="user">@${p.u || 'Unknown'}</div>
-                    <div class="title">${p.t || 'No Title'}</div>
-                    <p style="font-size:14px; color:#ccc; line-height:1.6;">${p.c || ''}</p>
-                    <div class="ai-box">
-                        <b style="color:#00ff41">🤖 ဗျာလ် (Byal):</b><br>
-                        <span style="display:block; margin-top:5px;">${p.ai}</span>
+                    <div class="user">@${p.u}</div>
+                    <div class="title">${p.t}</div>
+                    <p style="font-size:14px; color:#ccc;">${p.c}</p>
+                    <div class="ai-box"><b style="color:#00ff41">🤖 ဗျာလ် (Byal):</b><br>${p.ai}</div>
+                    <div class="action-bar">
+                        <span class="like-btn" onclick="like('${p.key}')">❤️ Like (${p.likes || 0})</span>
+                        <span style="cursor:pointer; color:#888;" onclick="reply('${p.key}')">💬 Reply</span>
                     </div>
+                    <div class="reply-box">${repliesHTML}</div>
                 `;
                 feed.appendChild(card);
             });
         });
     }
 
-    // --- (၅) USER အခြေအနေ စောင့်ကြည့်ခြင်း ---
+    // --- AUTH & TRACKING ---
     firebase.auth().onAuthStateChanged(user => {
         if (!user) { window.location.href = "index.html"; } 
         else {
             db.ref('users/' + user.uid).once('value', s => {
                 currentUsername = s.val() ? s.val().username : user.email.split('@')[0];
-                const display = document.getElementById('user-display');
-                if(display) display.innerText = "အသုံးပြုသူ - " + currentUsername;
-                trackPresence(user);
-                load();
+                document.getElementById('user-display').innerText = "အသုံးပြုသူ - " + currentUsername;
+                trackPresence(user); load();
             });
         }
     });
 
     function trackPresence(user) {
         const onlineRef = db.ref('online/' + user.uid);
-        onlineRef.set(true);
-        onlineRef.onDisconnect().remove();
+        onlineRef.set(true); onlineRef.onDisconnect().remove();
         db.ref('online').on('value', s => { document.getElementById('online-count').innerText = s.numChildren(); });
         db.ref('users').on('value', s => { document.getElementById('total-count').innerText = s.numChildren(); });
     }
 
-    function switchTab(tab) {
-        currentTab = tab;
-        document.getElementById('tab-latest').classList.remove('active');
-        document.getElementById('tab-popular').classList.remove('active');
-        document.getElementById('tab-' + tab).classList.add('active');
+    function switchTab(t) {
+        currentTab = t;
+        document.getElementById('tab-latest').classList.toggle('active', t==='latest');
+        document.getElementById('tab-popular').classList.toggle('active', t==='popular');
         load();
     }
 
-    function logout() {
-        if (confirm("လားပါဖို့ယာလား?")) {
-            firebase.auth().signOut().then(() => { window.location.href = "index.html"; });
-        }
-    }
+    function logout() { if (confirm("လားပါဖို့ယာလား?")) firebase.auth().signOut().then(() => window.location.href = "index.html"); }
 </script>
 </body>
 </html>
