@@ -44,7 +44,6 @@
    
 
 <script>
-    // ၁။ Firebase Configuration
     const config = {
         apiKey: "AIzaSyCpIv3avDNRYNrmrzKdMqfnMdNzBGZAPow",
         authDomain: "firstarakha.firebaseapp.com",
@@ -56,103 +55,82 @@
     const db = firebase.database();
     let currentUsername = "";
 
-    // ၂။ User အခြေအနေကို စစ်ဆေးခြင်း
     firebase.auth().onAuthStateChanged(user => {
         if (!user) {
             window.location.href = "index.html";
         } else {
-            // User အချက်အလက်ယူပြီး Presence စတင်မယ်
             db.ref('users/' + user.uid).once('value', s => {
                 currentUsername = s.val() ? s.val().username : user.email.split('@')[0];
                 document.getElementById('user-display').innerText = "User: " + currentUsername;
-                
-                trackPresence(user); // Online လူစာရင်းမှတ်ရန်
-                load(); // ပို့စ်များဆွဲတင်ရန်
+                trackPresence(user);
+                load(); // ဒီနေရာမှာ ပို့စ်တွေကို စတင်ခေါ်ယူမယ်
             });
         }
     });
 
-    // ၃။ Online/Total Count စနစ်
     function trackPresence(user) {
         const onlineRef = db.ref('online/' + user.uid);
         onlineRef.set(true);
         onlineRef.onDisconnect().remove();
-
-        // အရေအတွက်ကို Real-time ပြသခြင်း
-        db.ref('online').on('value', s => {
-            const count = s.numChildren();
-            if(document.getElementById('online-count')) document.getElementById('online-count').innerText = count;
-        });
-        db.ref('users').on('value', s => {
-            const total = s.numChildren();
-            if(document.getElementById('total-count')) document.getElementById('total-count').innerText = total;
-        });
+        db.ref('online').on('value', s => { if(document.getElementById('online-count')) document.getElementById('online-count').innerText = s.numChildren(); });
+        db.ref('users').on('value', s => { if(document.getElementById('total-count')) document.getElementById('total-count').innerText = s.numChildren(); });
     }
 
-    // ၄။ Gemini AI Function
-    async function askGemini(question) {
-        const KEY = "YOUR_GEMINI_API_KEY"; // ကိုကို့ Key ကို ဒီမှာထည့်ပါ
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${KEY}`;
-        try {
-            const res = await fetch(url, { 
-                method: "POST", 
-                headers: { "Content-Type": "application/json" }, 
-                body: JSON.stringify({ contents: [{ parts: [{ text: "မင်းက နည်းပညာအကြံပေး AI ဖြစ်တယ်။ မြန်မာလိုပဲ တိုတိုနဲ့ လိုရင်းကို ဖြေပေးပါ။ မေးခွန်းက- " + question }] }] }) 
-            });
-            const d = await res.json();
-            return d.candidates[0].content.parts[0].text;
-        } catch (e) { 
-            return "Gemini ခဏနားနေပါတယ် ကိုကို..."; 
-        }
-    }
-
-    // ၅။ Post တင်ခြင်း
     async function post() {
         const t = document.getElementById('t').value, c = document.getElementById('c').value;
         if(t && c) {
-            // AI အဖြေကို တစ်ခါတည်း တောင်းမယ်
-            const aiReply = await askGemini(c);
+            const btn = document.querySelector('button[onclick="post()"]');
+            btn.innerText = "တင်နေသည်..."; btn.disabled = true;
+            
+            // Gemini အဖြေကို ယာယီစာသား အရင်ထည့်ထားမယ်
             db.ref("posts").push({ 
-                u: currentUsername, 
-                t: t, 
-                c: c, 
-                ai: aiReply, 
-                time: Date.now(),
-                likes: 0 
+                u: currentUsername, t: t, c: c, 
+                ai: "Gemini စဉ်းစားနေပါတယ်...", 
+                time: Date.now() 
             });
+            
             document.getElementById('t').value = ""; 
             document.getElementById('c').value = "";
+            btn.innerText = "POST တင်မည်"; btn.disabled = false;
         }
     }
 
-    // ၆။ ပို့စ်များကို ပြသခြင်း
     function load() {
-        db.ref("posts").orderByChild("time").on("value", s => {
-            const feed = document.getElementById('feed'); 
+        // ပို့စ်တွေကို အချိန်နဲ့အမျှ စောင့်ကြည့်မယ်
+        db.ref("posts").on("value", s => {
+            const feed = document.getElementById('feed');
+            if (!feed) return;
             feed.innerHTML = "";
-            let items = []; 
-            s.forEach(child => { items.push({key: child.key, ...child.val()}); });
             
-            items.reverse().forEach(p => {
-                feed.innerHTML += `
-                <div class="card" style="background:#161616; padding:20px; border-radius:8px; margin-bottom:15px; border:1px solid #222;">
-                    <div class="user" style="color:#00ff41; font-size:12px;">@${p.u}</div>
-                    <div class="title" style="font-size:18px; color:#fff; margin:10px 0;">${p.t}</div>
-                    <p style="font-size:14px; color:#ccc;">${p.c}</p>
-                    <div class="ai-box" style="background:rgba(0,255,65,0.05); border:1px dashed #00ff41; padding:10px; margin-top:10px; font-size:13px;">
-                        <b style="color:#00ff41">🤖 Gemini AI:</b><br>${p.ai}
-                    </div>
-                </div>`;
+            let items = [];
+            s.forEach(child => {
+                items.push({ key: child.key, ...child.val() });
             });
+
+            // အသစ်တွေကို အပေါ်ဆုံးမှာ ပြမယ်
+            items.reverse().forEach(p => {
+                const card = document.createElement('div');
+                card.className = "card";
+                card.style = "background:#161616; padding:20px; border-radius:8px; margin-bottom:15px; border:1px solid #222;";
+                card.innerHTML = `
+                    <div class="user" style="color:#00ff41; font-size:12px;">@${p.u || 'Unknown'}</div>
+                    <div class="title" style="font-size:18px; color:#fff; margin:10px 0;">${p.t || 'No Title'}</div>
+                    <p style="font-size:14px; color:#ccc;">${p.c || ''}</p>
+                    <div class="ai-box" style="background:rgba(0,255,65,0.05); border:1px dashed #00ff41; padding:10px; margin-top:10px; font-size:13px;">
+                        <b style="color:#00ff41">🤖 Gemini AI:</b><br>${p.ai || 'အဖြေမရှိသေးပါ'}
+                    </div>
+                `;
+                feed.appendChild(card);
+            });
+        }, (error) => {
+            console.error("Data Load Error: ", error);
+            alert("ပို့စ်တွေပြဖို့ ခွင့်ပြုချက်မရှိဘူး ဖြစ်နေတယ် ကိုကို!");
         });
     }
 
-    // ၇။ Logout Function (ကိုကို့ error တက်နေတဲ့ အပိုင်း)
     function logout() {
         if (confirm("လားပါဖို့ယာလား?")) {
-            firebase.auth().signOut().then(() => {
-                window.location.href = "index.html";
-            });
+            firebase.auth().signOut().then(() => { window.location.href = "index.html"; });
         }
     }
 </script>
