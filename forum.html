@@ -24,7 +24,7 @@
         .action-bar { border-top: 1px solid #222; margin-top: 15px; padding-top: 10px; display: flex; gap: 20px; font-size: 13px; }
         .like-btn { cursor: pointer; color: #00ff41; }
         .reply-box { margin-top: 10px; padding-left: 15px; border-left: 2px solid #333; }
-        .ai-box { background: rgba(0, 255, 65, 0.05); border: 1px dashed #00ff41; padding: 12px; margin-top: 15px; font-size: 13px; border-radius: 4px; }
+        .ai-box { background: rgba(0, 255, 65, 0.05); border: 1px dashed #00ff41; padding: 12px; margin-top: 15px; font-size: 13px; border-radius: 4px; line-height: 1.6; }
     </style>
 </head>
 <body>
@@ -55,6 +55,7 @@
 </div>
 
 <script>
+    // --- ၁။ Firebase Configuration (ကိုကို့ Key တွေ ထည့်ထားပါတယ်) ---
     const config = {
         apiKey: "AIzaSyCpIv3avDNRYNrmrzKdMqfnMdNzBGZAPow",
         authDomain: "firstarakha.firebaseapp.com",
@@ -67,41 +68,53 @@
     let currentUsername = "";
     let currentTab = 'latest';
 
-    // --- AI FUNCTION ---
+    // --- ၂။ AI FUNCTION (Backend ဆီ လှမ်းမေးအောင် ပြင်ထားပါရေ) ---
     async function askGemini(question) {
-        const GEMINI_API_KEY = "AIzaSyCO6AnWclvWyByCcRjsenFOTgwEQh_gyXs"; 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
         try {
-            const res = await fetch(url, {
+            const res = await fetch("/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ contents: [{ parts: [{ text: "မင်းနာမည်က ဗျာလ် (Byal) ဖြစ်တယ်။ ရက္ခိုင်နည်းပညာ AI အနေနဲ့ တိုတိုနဲ့ လိုရင်းဖြေပေးပါ။ မေးခွန်း - " + question }] }] })
+                body: JSON.stringify({ message: "မင်းနာမည်က ဗျာလ် (Byal) ဖြစ်တယ်။ ရက္ခိုင်နည်းပညာ AI အနေနဲ့ တိုတိုနဲ့ လိုရင်းဖြေပေးပါ။ မေးခွန်း - " + question })
             });
             const data = await res.json();
-            return data.candidates[0].content.parts[0].text;
-        } catch (e) { return "ဗျာလ် အနားယူနီပါရေ"; }
+            return data.reply; // Backend က ပြန်ပေးတဲ့ AI အဖြေ
+        } catch (e) { 
+            console.error("AI Error:", e);
+            return "ဗျာလ် အနားယူနီပါရေ (Backend နဲ့ ချိတ်လို့မရပါ)"; 
+        }
     }
 
-    // --- POST စနစ် ---
+    // --- ၃။ POST တင်ခြင်းစနစ် ---
     async function post() {
         const t = document.getElementById('t').value, c = document.getElementById('c').value;
         if(t && c) {
             const btn = document.getElementById('post-btn');
-            btn.innerText = "ဗျာလ် စဉ်းစားနီပါရေ..."; btn.disabled = true;
-            const aiResponse = await askGemini(c); 
-            db.ref("posts").push({ u: currentUsername, t: t, c: c, ai: aiResponse, time: Date.now(), likes: 0 });
-            document.getElementById('t').value = ""; document.getElementById('c').value = "";
-            btn.innerText = "POST တင်မေ"; btn.disabled = false;
+            btn.innerText = "ဗျာလ် စဉ်းစားနီပါရေ..."; 
+            btn.disabled = true;
+
+            const aiResponse = await askGemini(c); // AI ဆီက အဖြေတောင်းမယ်
+            
+            db.ref("posts").push({ 
+                u: currentUsername, 
+                t: t, 
+                c: c, 
+                ai: aiResponse, 
+                time: Date.now(), 
+                likes: 0 
+            });
+
+            document.getElementById('t').value = ""; 
+            document.getElementById('c').value = "";
+            btn.innerText = "POST တင်မေ"; 
+            btn.disabled = false;
         }
     }
 
-    // --- LIKE စနစ် ---
+    // --- ၄။ Like & Reply စနစ်များ ---
     function like(id) {
-        const ref = db.ref("posts/" + id + "/likes");
-        ref.transaction(c => (c || 0) + 1);
+        db.ref("posts/" + id + "/likes").transaction(c => (c || 0) + 1);
     }
 
-    // --- REPLY စနစ် ---
     function reply(id) {
         const rText = prompt("ပြောကြည့်ဇမ် -");
         if(rText) {
@@ -109,7 +122,7 @@
         }
     }
 
-    // --- LOAD စနစ် ---
+    // --- ၅။ Feed ကို ပြသခြင်းစနစ် ---
     function load() {
         db.ref("posts").on("value", s => {
             const feed = document.getElementById('feed');
@@ -134,7 +147,7 @@
                     <div class="user">@${p.u}</div>
                     <div class="title">${p.t}</div>
                     <p style="font-size:14px; color:#ccc;">${p.c}</p>
-                    <div class="ai-box"><b style="color:#00ff41">🤖 ဗျာလ် (Byal):</b><br>${p.ai}</div>
+                    <div class="ai-box"><b style="color:#00ff41">🤖 ဗျာလ် (Byal):</b><br>${p.ai || "စဉ်းစားနီတုန်း..."}</div>
                     <div class="action-bar">
                         <span class="like-btn" onclick="like('${p.key}')">❤️ Like (${p.likes || 0})</span>
                         <span style="cursor:pointer; color:#888;" onclick="reply('${p.key}')">💬 Reply</span>
@@ -146,21 +159,23 @@
         });
     }
 
-    // --- AUTH & TRACKING ---
+    // --- ၆။ User Auth & Presence ---
     firebase.auth().onAuthStateChanged(user => {
         if (!user) { window.location.href = "index.html"; } 
         else {
             db.ref('users/' + user.uid).once('value', s => {
                 currentUsername = s.val() ? s.val().username : user.email.split('@')[0];
                 document.getElementById('user-display').innerText = "အသုံးပြုသူ - " + currentUsername;
-                trackPresence(user); load();
+                trackPresence(user); 
+                load();
             });
         }
     });
 
     function trackPresence(user) {
         const onlineRef = db.ref('online/' + user.uid);
-        onlineRef.set(true); onlineRef.onDisconnect().remove();
+        onlineRef.set(true); 
+        onlineRef.onDisconnect().remove();
         db.ref('online').on('value', s => { document.getElementById('online-count').innerText = s.numChildren(); });
         db.ref('users').on('value', s => { document.getElementById('total-count').innerText = s.numChildren(); });
     }
@@ -172,7 +187,11 @@
         load();
     }
 
-    function logout() { if (confirm("လားပါဖို့ယာလား?")) firebase.auth().signOut().then(() => window.location.href = "index.html"); }
+    function logout() { 
+        if (confirm("လားပါဖို့ယာလား?")) {
+            firebase.auth().signOut().then(() => window.location.href = "index.html");
+        } 
+    }
 </script>
 </body>
 </html>
