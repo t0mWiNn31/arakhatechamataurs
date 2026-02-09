@@ -8,6 +8,15 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
+         #matrixCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* အနောက်ဆုံးကို ပို့ထားတာပါ */
+    background-color: black;
+}
         body { background: #050505; color: #00ff41; font-family: 'Courier New', monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; flex-direction: column; }
         .card { background: #0a0a0a; padding: 30px; border: 1px solid #333; box-shadow: 0 0 15px #00ff4133; width: 320px; text-align: center; border-radius: 4px; }
         input { width: 100%; background: #000; border: 1px solid #222; color: #00ff41; padding: 12px; margin-bottom: 10px; outline: none; box-sizing: border-word; }
@@ -44,15 +53,7 @@
     </div>
 
 <script>
-    #matrixCanvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1; /* အနောက်ဆုံးကို ပို့ထားတာပါ */
-    background-color: black;
-}
+   
     // --- ၁။ Firebase Config (ကိုကို့ Key တွေ ဒီမှာ အစားထိုးပါ) ---
     const config = {
         apiKey: "AIzaSyCpIv3avDNRYNrmrzKdMqfnMdNzBGZAPow", 
