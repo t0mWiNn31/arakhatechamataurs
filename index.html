@@ -14,7 +14,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -1; /* အနောက်ဆုံးကို ပို့ထားတာပါ */
+    z-index: -1; 
     background-color: black;
 }
         body { background: #050505; color: #00ff41; font-family: 'Courier New', monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; flex-direction: column; }
@@ -54,7 +54,6 @@
 
 <script>
    
-    // --- ၁။ Firebase Config (ကိုကို့ Key တွေ ဒီမှာ အစားထိုးပါ) ---
     const config = {
         apiKey: "AIzaSyCpIv3avDNRYNrmrzKdMqfnMdNzBGZAPow", 
         authDomain: "firstarakha.firebaseapp.com",
@@ -68,7 +67,7 @@
     const db = firebase.database();
     let isRegister = false;
 
-    // --- ၂။ ဗျာလ် AI Function (Backend နဲ့ ချိတ်တာ) ---
+   
     async function askAI(userMessage) {
         try {
             const response = await fetch('/chat', {
@@ -80,11 +79,11 @@
             return data.reply;
         } catch (error) {
             console.error("Error:", error);
-            return "ဗျာလ် ဆာဗာနဲ့ ချိတ်လို့ မရဖြစ်နေတယ် ကိုကို။";
+            return "ဗျာလ် ဆာဗာနဲ့ ချိတ်လို့မရဖစ်နိန်ပါရေ";
         }
     }
 
-    // --- ၃။ Form Toggle ---
+   
     function toggleForm() {
         isRegister = !isRegister;
         document.getElementById('reg-fields').style.display = isRegister ? 'block' : 'none';
@@ -93,7 +92,7 @@
         document.getElementById('toggle-text').innerText = isRegister ? 'အကောင့်ဟိပြီးသားလား? ဝင်ပါ' : 'အကောင့်အသစ်ဖွင့်ပါ';
     }
 
-    // --- ၄။ Login / Register Logic ---
+ 
     function handleAuth() {
         const e = document.getElementById('email').value;
         const p = document.getElementById('pass').value;
@@ -112,46 +111,46 @@
         }
     }
 
-    // Auth State
+   
     firebase.auth().onAuthStateChanged(user => { 
         if(user) window.location.href = "forum.html"; 
     });
 
-    // အသုံးပြုသူအရေအတွက်ပြရန်
+  
     db.ref('users').on('value', s => {
         document.getElementById('total-users').innerText = s.numChildren() || 0;
     });
     const canvas = document.getElementById('matrixCanvas');
 const ctx = canvas.getContext('2d');
 
-// စာမျက်နှာ အပြည့်ဖြစ်အောင် လုပ်ခြင်း
+
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// Matrix မှာ သုံးမယ့် စာလုံးများ (ကိုကို စိတ်ကြိုက် ပြင်လို့ရတယ်)
-const letters = "ARAKHAHACKER010101ဗျာလ်";
+
+const letters = "ARAKHA010101";
 const fontSize = 16;
 const columns = canvas.width / fontSize;
 
-// အစက်အပြောက် တစ်ခုချင်းစီရဲ့ နေရာကို မှတ်ထားခြင်း
+
 const drops = [];
 for (let i = 0; i < columns; i++) {
     drops[i] = 1;
 }
 
 function drawMatrix() {
-    // စာလုံးဟောင်းတွေကို ဖြည်းဖြည်းချင်း မှိန်သွားအောင် လုပ်ခြင်း
+  
     ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.fillStyle = "#0F0"; // စာလုံးအရောင် (အစိမ်းရောင်)
+    ctx.fillStyle = "#0F0"; // 
     ctx.font = fontSize + "px monospace";
 
     for (let i = 0; i < drops.length; i++) {
         const text = letters.charAt(Math.floor(Math.random() * letters.length));
         ctx.fillText(text, i * fontSize, drops[i] * fontSize);
 
-        // စာလုံးတွေ အောက်ရောက်သွားရင် အပေါ်ကနေ ပြန်စခြင်း
+      
         if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
             drops[i] = 0;
         }
@@ -159,10 +158,10 @@ function drawMatrix() {
     }
 }
 
-// ၃၃ မီလီစက္ကန့် တိုင်းမှာ တစ်ခါ ပြန်ဆွဲခြင်း (Frame Rate)
+
 setInterval(drawMatrix, 33);
 
-// ဖုန်း screen လှည့်ရင် resize လုပ်ဖို့
+
 window.addEventListener('resize', () => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
