@@ -19,7 +19,8 @@
         input, textarea { width: 100%; background: #000; border: 1px solid #444; color: #fff; padding: 12px; margin-top: 10px; outline: none; box-sizing: border-box; }
         button { background: #00ff41; color: #000; border: none; padding: 10px 15px; cursor: pointer; font-weight: bold; margin-top: 10px; border-radius: 4px; }
         .card { background: #161616; padding: 20px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #222; }
-        .user { color: #00ff41; font-weight: bold; font-size: 12px; }
+        .user a { color: #00ff41; font-weight: bold; font-size: 12px; text-decoration: none; }
+        .user a:hover { text-decoration: underline; }
         .title { font-size: 18px; color: #fff; margin: 10px 0; }
         .action-bar { border-top: 1px solid #222; margin-top: 15px; padding-top: 10px; display: flex; gap: 20px; font-size: 13px; }
         .like-btn { cursor: pointer; color: #00ff41; }
@@ -56,7 +57,6 @@
 </div>
 
 <script>
-  
     const config = {
         apiKey: "AIzaSyCpIv3avDNRYNrmrzKdMqfnMdNzBGZAPow",
         authDomain: "firstarakha.firebaseapp.com",
@@ -68,7 +68,6 @@
     const db = firebase.database();
     let currentUsername = "";
     let currentTab = 'latest';
-
 
     async function askGemini(question) {
         try {
@@ -85,10 +84,11 @@
         }
     }
 
-  
     async function post() {
         const t = document.getElementById('t').value, c = document.getElementById('c').value;
-        if(t && c) {
+        const user = firebase.auth().currentUser; // User ID ယူရန်
+
+        if(t && c && user) {
             const btn = document.getElementById('post-btn');
             btn.innerText = "ဗျာလ် စဉ်းစားနီပါရေ..."; 
             btn.disabled = true;
@@ -97,6 +97,7 @@
             
             db.ref("posts").push({ 
                 u: currentUsername, 
+                uid: user.uid, // Profile Link အတွက် ID သိမ်းလိုက်ပြီ
                 t: t, 
                 c: c, 
                 ai: aiResponse, 
@@ -111,7 +112,6 @@
         }
     }
 
-  
     function like(id) {
         db.ref("posts/" + id + "/likes").transaction(c => (c || 0) + 1);
     }
@@ -123,7 +123,6 @@
         }
     }
 
- 
     function load() {
         db.ref("posts").on("value", s => {
             const feed = document.getElementById('feed');
@@ -145,7 +144,7 @@
                 const card = document.createElement('div');
                 card.className = "card";
                 card.innerHTML = `
-                    <div class="user">@${p.u}</div>
+                    <div class="user"><a href="profile.html?id=${p.uid || ''}">@${p.u}</a></div>
                     <div class="title">${p.t}</div>
                     <p style="font-size:14px; color:#ccc;">${p.c}</p>
                     <div class="ai-box"><b style="color:#00ff41">🤖 ဗျာလ် (Byal):</b><br>${p.ai || "စဉ်းစားနီတုန်း..."}</div>
@@ -160,7 +159,6 @@
         });
     }
 
- 
     firebase.auth().onAuthStateChanged(user => {
         if (!user) { window.location.href = "index.html"; } 
         else {
