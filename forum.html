@@ -12,62 +12,36 @@
         #matrix-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
         body { background: #000; color: #ccc; font-family: sans-serif; margin: 0; overflow-x: hidden; }
         
-        /* Glassmorphism Navigation */
-        /* Navigation ပိုင်းကို ဖုန်းအတွက်ပါ ညှိထားတဲ့ CSS */
-.nav { 
-    background: rgba(17, 17, 17, 0.9); 
-    backdrop-filter: blur(10px); 
-    padding: 10px; 
-    border-bottom: 1px solid #00ff41; 
-    position: sticky; top: 0; z-index: 100; 
-}
-.nav-top { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    margin-bottom: 10px; 
-}
-.nav-right {
-    display: flex; 
-    flex-direction: column; 
-    align-items: flex-end; 
-    gap: 5px;
-}
-.nav-tabs { display: flex; gap: 15px; border-top: 1px solid #222; padding-top: 8px; }
-.tab { font-size: 12px; color: #888; cursor: pointer; padding: 5px 0; }
-.tab.active { color: #00ff41; border-bottom: 2px solid #00ff41; }
+        .nav { background: rgba(17, 17, 17, 0.9); backdrop-filter: blur(10px); padding: 10px; border-bottom: 1px solid #00ff41; position: sticky; top: 0; z-index: 100; }
+        .nav-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .nav-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+        .nav-tabs { display: flex; gap: 15px; border-top: 1px solid #222; padding-top: 8px; }
+        .tab { font-size: 12px; color: #888; cursor: pointer; padding: 5px 0; }
+        .tab.active { color: #00ff41; border-bottom: 2px solid #00ff41; }
 
-/* ဖုန်းအတွက် သီးသန့် (Mobile Fix) */
-@media (max-width: 480px) {
-    b { font-size: 13px; }
-    #user-display { font-size: 10px; }
-    .nav-tabs { 
-    display: flex; 
-    justify-content: center; /* စာသားတွေကို အလည်ပို့ပေးမယ် */
-    gap: 30px; /* စာသားနှစ်ခုကြား နေရာချန်မယ် */
-    border-top: 1px solid #222; 
-    padding-top: 8px; 
-    margin-top: 8px;
-}
-    .tab { font-size: 11px; }
-    button { padding: 4px 8px !important; font-size: 9px !important; }
-}
-      
+        @media (max-width: 480px) {
+            b { font-size: 13px; }
+            #user-display { font-size: 10px; }
+            .nav-tabs { display: flex; justify-content: center; gap: 30px; border-top: 1px solid #222; padding-top: 8px; margin-top: 8px; }
+            .tab { font-size: 11px; }
+            button { padding: 4px 8px !important; font-size: 9px !important; }
+        }
 
         .container { max-width: 700px; margin: 20px auto; padding: 10px; position: relative; z-index: 1; }
-        
-        /* Post Input Box */
         .post-input { background: rgba(17, 17, 17, 0.85); padding: 25px; border: 1px solid #00ff41; margin-bottom: 20px; border-radius: 12px; }
         input, textarea { width: 100%; background: #000; border: 1px solid #444; color: #00ff41; padding: 12px; margin-top: 10px; outline: none; box-sizing: border-box; border-radius: 4px; }
         button { background: #00ff41; color: #000; border: none; padding: 12px; cursor: pointer; font-weight: bold; margin-top: 15px; border-radius: 4px; transition: 0.3s; }
-        button:hover { background: #00cc33; }
         
-        /* Cards */
         .card { background: rgba(22, 22, 22, 0.9); padding: 20px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #222; backdrop-filter: blur(5px); }
         .user { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
         .user a { color: #00ff41; font-weight: bold; font-size: 15px; text-decoration: none; }
-        .avatar { font-size: 25px; background: #111; border-radius: 50%; width: 40px; height: 40px; border: 1px solid #333; display: flex; align-items: center; justify-content: center; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #333; display: flex; align-items: center; justify-content: center; background: #111; font-size: 25px; overflow: hidden; object-fit: cover; }
+        
+        .online-dot { width: 8px; height: 8px; background: #00ff41; border-radius: 50%; display: inline-block; border: 1px solid #000; margin-left: 3px; }
+        .badge { font-size: 9px; padding: 1px 4px; border-radius: 3px; margin-left: 5px; background: #00ff41; color: #000; font-weight: bold; }
+        
         .reply-box { margin-top: 10px; padding-left: 15px; border-left: 2px solid #00ff41; font-size: 13px; }
+        #preview-img { width: 100%; max-height: 200px; object-fit: contain; display: none; margin-top: 10px; border: 1px dashed #00ff41; }
     </style>
 </head>
 <body>
@@ -75,24 +49,19 @@
 <canvas id="matrix-canvas"></canvas>
 
 <div class="nav">
-    <div class="nav-top" style="display: flex; justify-content: space-between; align-items: center;">
-        
+    <div class="nav-top">
         <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="width: 35px; height: 35px; background: #111; border: 1px solid #00ff41; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
-                <img src="logo.png" alt="Logo" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid #00ff41; flex-shrink: 0;">
-            </div>
-            
+            <img src="logo.png" alt="Logo" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid #00ff41;">
             <div>
-                <b style="color:#00ff41; display: block; line-height: 1; font-size: 14px;">ARAKHA_FORUM</b>
+                <b style="color:#00ff41; font-size: 14px;">ARAKHA_FORUM</b>
                 <div style="font-size: 9px; color: #666; margin-top: 3px;">
                     ON: <span id="online-count">0</span> | TOT: <span id="total-count">0</span>
                 </div>
             </div>
         </div>
 
-        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
-            <div id="user-display" style="color: #00ff41; font-weight: bold; font-size: 10px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                </div>
+        <div class="nav-right">
+            <div id="user-display" style="color: #00ff41; font-weight: bold; font-size: 10px;"></div>
             <div style="display: flex; gap: 5px;">
                 <button onclick="goToProfile()" style="background:transparent; border:1px solid #00ff41; color:#00ff41; padding:4px 8px; font-size: 9px; cursor: pointer; border-radius: 4px;">PROFILE</button>
                 <button onclick="logout()" style="background:#ff4444; color:#fff; border:none; padding:4px 8px; font-size: 9px; cursor: pointer; border-radius: 4px;">LOGOUT</button>
@@ -100,54 +69,44 @@
         </div>
     </div>
 
-    <div class="nav-tabs" style="display: flex; gap: 15px; border-top: 1px solid #222; padding-top: 8px; margin-top: 10px;">
+    <div class="nav-tabs">
         <div class="tab active" id="tab-latest" onclick="switchTab('latest')">နောက်ဆုံးတင်ခစာ</div>
         <div class="tab" id="tab-popular" onclick="switchTab('popular')">နာမည်ကြီး</div>
     </div>
 </div>
+
 <div class="container">
     <div class="post-input">
         <div style="text-align: center; margin-bottom: 20px;">
             <h2 style="margin: 0; color: #00ff41; font-size: 20px;">ရက္ခိုင်သားအချင်းချင်း ဆွေးနွေးကတ်မေ</h2>
             <p style="margin: 5px 0 0 0; color: #aaa; font-size: 14px;">...လိုအပ်စာတိဟိကေ ပို့စ်တင်လို့ အကြံပြုခကတ်ပါ...</p>
         </div>
-        
         <input type="text" id="t" placeholder="ဂေါင်းစိုင် (Title)">
         <textarea id="c" rows="3" placeholder="အကြောင်းအရာ..."></textarea>
-        <button onclick="post()" style="width: 100%;">POST တင်မေ</button>
+        
+        <img id="preview-img">
+        <input type="file" id="imageInput" accept="image/*" style="display:none;" onchange="showPreview(this)">
+        
+        <div style="display: flex; gap: 10px;">
+            <button onclick="document.getElementById('imageInput').click()" style="background:#222; color:#00ff41; border:1px solid #00ff41; flex: 1;">🖼️ ပုံရွေးမေ</button>
+            <button onclick="post()" id="postBtn" style="flex: 2;">POST တင်မေ</button>
+        </div>
+        <div id="upload-status" style="font-size: 10px; color: #888; margin-top: 5px; text-align: center;"></div>
     </div>
     <div id="feed"></div>
 </div>
 
 <script>
-    // --- 1. Security Logic (Malicious Script တားဆီးရန်) ---
-    function escapeHTML(str) {
-        if (!str) return "";
-        return str.replace(/[&<>"']/g, function(m) {
-            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
-        });
-    }
-    function goToProfile() {
-    const user = firebase.auth().currentUser;
-    if(user) {
-        // မိမိရဲ့ UID ကို ပါရာမီတာအနေနဲ့ ပို့ပြီး profile.html ကို သွားမယ်
-        window.location.href = "profile.html?id=" + user.uid;
-    }
-}
-
-    // --- 2. Matrix Background ---
+    // --- 1. Matrix Background ---
     const canvas = document.getElementById('matrix-canvas');
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth; canvas.height = window.innerHeight;
     const matrixText = "ARAKHA010101";
     const fontSize = 16;
     const drops = Array(Math.floor(canvas.width / fontSize)).fill(1);
-
     function drawMatrix() {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#00ff41";
-        ctx.font = fontSize + "px monospace";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.05)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#00ff41"; ctx.font = fontSize + "px monospace";
         drops.forEach((y, i) => {
             const char = matrixText[Math.floor(Math.random() * matrixText.length)];
             ctx.fillText(char, i * fontSize, y * fontSize);
@@ -157,7 +116,7 @@
     }
     setInterval(drawMatrix, 50);
 
-    // --- 3. Firebase Implementation ---
+    // --- 2. Firebase Setup ---
     const config = {
         apiKey: "AIzaSyCpIv3avDNRYNrmrzKdMqfnMdNzBGZAPow",
         authDomain: "firstarakha.firebaseapp.com",
@@ -168,17 +127,50 @@
     firebase.initializeApp(config);
     const db = firebase.database();
 
+    // --- 3. Utilities ---
+    function escapeHTML(str) {
+        if (!str) return "";
+        return str.replace(/[&<>"']/g, function(m) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+        });
+    }
+
+    function formatText(text, postId) {
+        const limit = 200;
+        if (text.length <= limit) return text;
+        const shortText = text.substring(0, limit);
+        return `
+            <span id="short-${postId}">${shortText}...</span>
+            <span id="full-${postId}" style="display:none;">${text}</span>
+            <a href="javascript:void(0)" id="btn-${postId}" onclick="toggleReadMore('${postId}')" style="color:#00ff41; font-size:12px; text-decoration:none;"> [Read More]</a>
+        `;
+    }
+
+    function toggleReadMore(postId) {
+        const short = document.getElementById(`short-${postId}`);
+        const full = document.getElementById(`full-${postId}`);
+        const btn = document.getElementById(`btn-${postId}`);
+        if (full.style.display === "none") {
+            full.style.display = "inline"; short.style.display = "none"; btn.innerText = " [Show Less]";
+        } else {
+            full.style.display = "none"; short.style.display = "inline"; btn.innerText = " [Read More]";
+        }
+    }
+
+    function getAvatarHTML(user) {
+        if (user.profilePic && user.profilePic.startsWith('http')) {
+            return `<img src="${user.profilePic}" class="avatar">`;
+        } else {
+            return `<div class="avatar">${user.profilePic || "👤"}</div>`;
+        }
+    }
+
+    // --- 4. Core Logic ---
     let userDataCache = {};
     let postsData = [];
     let currentTab = 'latest';
 
-    // Users Data ကို အမြဲ Watch လုပ်မယ် (Real-time Name Update)
-    db.ref('users').on('value', snap => {
-        userDataCache = snap.val() || {};
-        renderFeed();
-    });
-
-    // Posts တွေကို Watch လုပ်မယ်
+    db.ref('users').on('value', snap => { userDataCache = snap.val() || {}; renderFeed(); });
     db.ref('posts').on('value', snap => {
         postsData = [];
         snap.forEach(child => { postsData.push({ key: child.key, ...child.val() }); });
@@ -188,25 +180,20 @@
     function renderFeed() {
         const feed = document.getElementById('feed');
         feed.innerHTML = "";
-        
         let items = [...postsData];
         if (currentTab === 'latest') items.reverse();
         else items.sort((a, b) => (b.likes || 0) - (a.likes || 0));
 
         items.forEach(p => {
             const user = userDataCache[p.uid] || {};
-            const name = user.username || p.u || "အမည်မသိ";
-            const avatar = user.profilePic || "👤";
-
+            const isOnline = user.isOnline ? '<span class="online-dot" title="Online"></span>' : '';
+            const badge = user.role === 'admin' ? '<span class="badge">DEV</span>' : '';
+            
             let repliesHTML = "";
             if (p.replies) {
                 Object.values(p.replies).forEach(r => {
-                    const rUser = userDataCache[r.uid] || {};
-                    repliesHTML += `
-                        <div style="margin-top:8px;">
-                            <span>${rUser.profilePic || '👤'}</span>
-                            <a href="profile.html?id=${r.uid}" style="color:#00ff41; text-decoration:none;">@${rUser.username || r.u}:</a> ${r.m}
-                        </div>`;
+                    const rU = userDataCache[r.uid] || {};
+                    repliesHTML += `<div style="margin-top:8px;">${rU.profilePic || '👤'} <a href="profile.html?id=${r.uid}" style="color:#00ff41; text-decoration:none;">@${rU.username || r.u}:</a> ${r.m}</div>`;
                 });
             }
 
@@ -214,11 +201,15 @@
             card.className = "card";
             card.innerHTML = `
                 <div class="user">
-                    <div class="avatar">${avatar}</div>
-                    <a href="profile.html?id=${p.uid}">@${name}</a>
+                    ${getAvatarHTML(user)}
+                    <div>
+                        <a href="profile.html?id=${p.uid}">@${user.username || p.u}</a> ${isOnline} ${badge}
+                        <div style="font-size:9px; color:#555;">${new Date(p.time).toLocaleString()}</div>
+                    </div>
                 </div>
                 <div style="color:#fff; font-weight:bold; margin-bottom:5px; font-size:18px;">${p.t}</div>
-                <p style="margin:0; font-size:14px; line-height:1.5;">${p.c}</p>
+                <p style="margin:0; font-size:14px; line-height:1.5;">${formatText(p.c, p.key)}</p>
+                ${p.img ? `<img src="${p.img}" style="width:100%; border-radius:8px; margin-top:10px; border:1px solid #333;">` : ''}
                 <div style="margin-top:10px; font-size:12px; display:flex; gap:15px;">
                     <span style="color:#00ff41; cursor:pointer;" onclick="like('${p.key}')">❤️ Like (${p.likes || 0})</span>
                     <span style="color:#888; cursor:pointer;" onclick="reply('${p.key}')">💬 Reply</span>
@@ -228,59 +219,83 @@
         });
     }
 
+    // --- 5. Actions ---
+    function showPreview(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = e => { document.getElementById('preview-img').src = e.target.result; document.getElementById('preview-img').style.display = 'block'; };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
     async function post() {
         const t = document.getElementById('t').value;
         const c = document.getElementById('c').value;
+        const file = document.getElementById('imageInput').files[0];
         const user = firebase.auth().currentUser;
-        if(t && c && user) {
-            // HTML Escape လုပ်ပြီးမှ Database သို့ပို့မည်
-            db.ref("posts").push({
-                uid: user.uid,
-                u: user.email.split('@')[0], 
-                t: escapeHTML(t),
-                c: escapeHTML(c),
-                time: Date.now(),
-                likes: 0
-            });
-            document.getElementById('t').value = ""; document.getElementById('c').value = "";
+        const btn = document.getElementById('postBtn');
+        const status = document.getElementById('upload-status');
+
+        if(!user || (!t && !c)) return;
+        btn.disabled = true; status.innerText = "DATA_SENDING...";
+
+        let imgUrl = null;
+        if (file) {
+            const fd = new FormData(); fd.append("image", file);
+            try {
+                const res = await fetch("https://api.imgbb.com/1/upload?key=926060156d59194f53e97f7cec5ff5a2", {method:"POST", body:fd});
+                const data = await res.json();
+                imgUrl = data.success ? data.data.url : null;
+            } catch (e) { console.error(e); }
         }
+
+        db.ref("posts").push({
+            uid: user.uid, u: user.email.split('@')[0],
+            t: escapeHTML(t), c: escapeHTML(c), img: imgUrl,
+            time: Date.now(), likes: 0
+        }).then(() => {
+            document.getElementById('t').value = ""; document.getElementById('c').value = "";
+            document.getElementById('preview-img').style.display = 'none';
+            btn.disabled = false; status.innerText = "";
+        });
     }
 
     function reply(id) {
         const m = prompt("Reply ပြန်မေ -");
         const user = firebase.auth().currentUser;
         if(m && user) {
-            db.ref(`posts/${id}/replies`).push({
-                uid: user.uid,
-                u: user.email.split('@')[0],
-                m: escapeHTML(m)
-            });
+            db.ref(`posts/${id}/replies`).push({ uid: user.uid, u: user.email.split('@')[0], m: escapeHTML(m) });
         }
     }
 
     function like(id) { db.ref(`posts/${id}/likes`).transaction(c => (c || 0) + 1); }
-
     function switchTab(t) {
         currentTab = t;
         document.getElementById('tab-latest').classList.toggle('active', t==='latest');
         document.getElementById('tab-popular').classList.toggle('active', t==='popular');
         renderFeed();
     }
+    function goToProfile() { const u = firebase.auth().currentUser; if(u) window.location.href = "profile.html?id=" + u.uid; }
 
+    // --- 6. Auth & Presence ---
     firebase.auth().onAuthStateChanged(user => {
         if (!user) window.location.href = "index.html";
         else {
-            db.ref('users/' + user.uid).on('value', s => {
+            const sRef = db.ref('users/' + user.uid);
+            sRef.update({ isOnline: true });
+            sRef.onDisconnect().update({ isOnline: false, lastSeen: Date.now() });
+            sRef.on('value', s => { 
                 const data = s.val() || {};
-                document.getElementById('user-display').innerText = "အသုံးပြုသူ - " + (data.username || user.email.split('@')[0]);
+                document.getElementById('user-display').innerText = "အသုံးပြုသူ - " + (data.username || user.email.split('@')[0]); 
             });
-            const onlineRef = db.ref('online/' + user.uid);
-            onlineRef.set(true); onlineRef.onDisconnect().remove();
         }
     });
 
-    db.ref('online').on('value', s => { document.getElementById('online-count').innerText = s.numChildren(); });
-    db.ref('users').on('value', s => { document.getElementById('total-count').innerText = s.numChildren(); });
+    db.ref('users').on('value', s => {
+        document.getElementById('total-count').innerText = s.numChildren();
+        let on = 0; s.forEach(u => { if(u.val().isOnline) on++; });
+        document.getElementById('online-count').innerText = on;
+    });
 
     function logout() { 
         if (confirm("လားပါဖို့ယာလား?(အားကေလာလည်ပါ)")) {
