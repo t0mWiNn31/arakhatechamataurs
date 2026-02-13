@@ -2,6 +2,14 @@
 <html lang="my">
 <head>
     <meta charset="UTF-8">
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#00ff41">
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js');
+  }
+</script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arakha Tech Amateurs - Login</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
