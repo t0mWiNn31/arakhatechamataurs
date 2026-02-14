@@ -37,7 +37,7 @@
 <div class="profile-card">
     <div class="avatar-container">
         <div id="avatar-view" class="avatar-display">👤</div>
-        <label for="img-input" class="upload-icon" title="Upload Photo">📷</label>
+        <label for="img-input" class="upload-icon" title="Upload Photo" id="upload-label">📷</label>
         <input type="file" id="img-input" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
     </div>
 
@@ -75,13 +75,14 @@
         <textarea id="bio" rows="2" placeholder="ကိုယ့်အကြောင်း..."></textarea>
     </div>
     
-   <div style="display: flex; gap: 10px; flex-direction: column;">
-    <button onclick="saveProfile()" id="saveBtn">UPDATE PROFILE</button>
-    
-    <button id="msgBtn" style="background: #0084ff; color: #fff; display: none;" onclick="goToChat()">MESSAGE</button>
-    
-    <button class="back-btn" onclick="window.location.href='forum.html'">BACK TO FORUM</button>
+    <div style="display: flex; gap: 10px; flex-direction: column;">
+        <button onclick="saveProfile()" id="saveBtn">UPDATE PROFILE</button>
+        <button id="msgBtn" style="background: #0084ff; color: #fff; display: none;" onclick="goToChat()">MESSAGE</button>
+        <button class="back-btn" onclick="window.location.href='forum.html'">BACK TO FORUM</button>
+    </div>
+    <div id="status"></div>
 </div>
+
 <script>
     // --- Firebase Setup ---
     const config = {
@@ -94,7 +95,7 @@
     firebase.initializeApp(config);
     const db = firebase.database();
 
-    // Matrix BG (မူရင်းအတိုင်း)
+    // --- Matrix BG ---
     const canvas = document.getElementById('matrix-canvas');
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth; canvas.height = window.innerHeight;
@@ -110,54 +111,39 @@
     }
     setInterval(draw, 50);
 
-    // --- Profile Logic အသစ် ---
+    // --- Profile Logic ---
     const urlParams = new URLSearchParams(window.location.search);
-    const viewId = urlParams.get('id'); // URL က id ကို ဖတ်မယ်
+    const viewId = urlParams.get('id'); 
 
-   // --- Profile Logic အပိုင်းထဲမှာ ဒါလေးကို ရှာပြီး ပြင်ပါ ---
-firebase.auth().onAuthStateChanged(user => {
-    if (!user) {
-        window.location.href = "index.html";
-        return;
-    }
+    firebase.auth().onAuthStateChanged(user => {
+        if (!user) {
+            window.location.href = "index.html";
+            return;
+        }
 
-    const myId = user.uid;
-    const targetId = viewId || myId;
-    const isMyProfile = (targetId === myId);
+        const myId = user.uid;
+        const targetId = viewId || myId;
+        const isMyProfile = (targetId === myId);
 
-    if (!isMyProfile) {
-        // ကိုယ့် Profile မဟုတ်ရင်...
-        document.getElementById('saveBtn').style.display = 'none'; // Update ခလုတ်ဖျောက်
-        document.getElementById('msgBtn').style.display = 'block'; // Message ခလုတ်ပြ
-        
-        // Input တွေကို Read-only လုပ်တဲ့ ကျန်တဲ့ ကုဒ်တွေ ဒီအောက်မှာ ဆက်ရှိမယ်...
-        document.getElementById('username').readOnly = true;
-        // ... စသဖြင့် ...
-    }
-});
-
-// Chat ကို သွားမယ့် Function
-function goToChat() {
-    window.location.href = "chat.html";
-}
-        // Edit Button တွေနဲ့ Input တွေကို ကိုယ့် Profile မဟုတ်ရင် ပိတ်ထားမယ်
+        // UI ချိန်ညှိခြင်း (ကိုယ့် Profile မဟုတ်ရင် Edit ပိတ်မယ်)
         if (!isMyProfile) {
-            document.getElementById('saveBtn').style.display = 'none';
+            document.getElementById('saveBtn').style.display = 'none'; 
+            document.getElementById('msgBtn').style.display = 'block'; 
+            document.getElementById('upload-label').style.display = 'none';
+            
             document.getElementById('username').readOnly = true;
             document.getElementById('age').readOnly = true;
             document.getElementById('gender').disabled = true;
             document.getElementById('birthday').readOnly = true;
             document.getElementById('bio').readOnly = true;
-            document.querySelector('.upload-icon').style.display = 'none'; // ပုံတင်တဲ့ icon ဖျောက်မယ်
-            document.getElementById('username').placeholder = "";
             document.getElementById('bio').placeholder = "ဘာမှရေးမထားပါ...";
         }
 
         // Data ဆွဲထုတ်ခြင်း
         db.ref('users/' + targetId).on('value', s => {
             const data = s.val() || {};
-            document.getElementById('user-email').innerText = isMyProfile ? user.email : "PROFILE_INFO";
-            document.getElementById('username').value = data.username || "အမည်မရှိ";
+            document.getElementById('user-email').innerText = isMyProfile ? user.email : "ARAKHA_COMMUNITY_USER";
+            document.getElementById('username').value = data.username || "အမည်မသိ";
             document.getElementById('display-name').innerText = data.username || "User";
             document.getElementById('age').value = data.age || "";
             document.getElementById('gender').value = data.gender || "မရွေးရသေး";
@@ -173,7 +159,12 @@ function goToChat() {
         });
     });
 
-    // --- Save & Upload Functions (မူရင်းအတိုင်း) ---
+    // Chat ကို သွားမယ့် Function
+    function goToChat() {
+        window.location.href = "chat.html";
+    }
+
+    // --- Save & Upload Functions ---
     async function uploadAvatar(input) {
         if (!input.files || !input.files[0]) return;
         const status = document.getElementById('status');
@@ -186,12 +177,15 @@ function goToChat() {
             if (resData.success) {
                 await db.ref('users/' + firebase.auth().currentUser.uid).update({ profilePic: resData.data.url });
                 status.innerText = "UPDATED!";
+                setTimeout(() => status.innerText = "", 2000);
             }
         } catch (e) { status.innerText = "FAILED!"; }
     }
 
     function saveProfile() {
         const user = firebase.auth().currentUser;
+        if(!user) return;
+        const btn = document.getElementById('saveBtn');
         const updates = {
             username: document.getElementById('username').value,
             age: document.getElementById('age').value,
@@ -199,7 +193,9 @@ function goToChat() {
             birthday: document.getElementById('birthday').value,
             bio: document.getElementById('bio').value
         };
+        btn.disabled = true;
         db.ref('users/' + user.uid).update(updates).then(() => {
+            btn.disabled = false;
             document.getElementById('status').innerText = "SAVED!";
             setTimeout(() => document.getElementById('status').innerText = "", 2000);
         });
