@@ -93,7 +93,7 @@
     firebase.initializeApp(config);
     const db = firebase.database();
 
-    // Matrix BG
+    // Matrix BG (မူရင်းအတိုင်း)
     const canvas = document.getElementById('matrix-canvas');
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth; canvas.height = window.innerHeight;
@@ -109,63 +109,74 @@
     }
     setInterval(draw, 50);
 
-    // --- Data Loading ---
+    // --- Profile Logic အသစ် ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewId = urlParams.get('id'); // URL က id ကို ဖတ်မယ်
+
     firebase.auth().onAuthStateChanged(user => {
-        if (!user) window.location.href = "index.html";
-        else {
-            document.getElementById('user-email').innerText = user.email;
-            db.ref('users/' + user.uid).on('value', s => {
-                const data = s.val() || {};
-                document.getElementById('username').value = data.username || "";
-                document.getElementById('display-name').innerText = data.username || user.email.split('@')[0];
-                document.getElementById('age').value = data.age || "";
-                document.getElementById('gender').value = data.gender || "မရွီးချယ်ရသိ";
-                document.getElementById('birthday').value = data.birthday || "";
-                document.getElementById('bio').value = data.bio || "";
-                
-                const avatarView = document.getElementById('avatar-view');
-                if (data.profilePic && data.profilePic.startsWith('http')) {
-                    avatarView.innerHTML = `<img src="${data.profilePic}" style="width:100%; height:100%; object-fit:cover;">`;
-                } else {
-                    avatarView.innerHTML = data.profilePic || "👤";
-                }
-            });
+        if (!user) {
+            window.location.href = "index.html";
+            return;
         }
+
+        const myId = user.uid;
+        // တကယ်လို့ URL မှာ ID မပါရင် ကိုယ့် Profile ကို ပြမယ်
+        // ID ပါခဲ့ရင် အဲ့ဒီ ID ရဲ့ Data ကို ပြမယ်
+        const targetId = viewId || myId;
+        const isMyProfile = (targetId === myId);
+
+        // Edit Button တွေနဲ့ Input တွေကို ကိုယ့် Profile မဟုတ်ရင် ပိတ်ထားမယ်
+        if (!isMyProfile) {
+            document.getElementById('saveBtn').style.display = 'none';
+            document.getElementById('username').readOnly = true;
+            document.getElementById('age').readOnly = true;
+            document.getElementById('gender').disabled = true;
+            document.getElementById('birthday').readOnly = true;
+            document.getElementById('bio').readOnly = true;
+            document.querySelector('.upload-icon').style.display = 'none'; // ပုံတင်တဲ့ icon ဖျောက်မယ်
+            document.getElementById('username').placeholder = "";
+            document.getElementById('bio').placeholder = "ဘာမှရေးမထားပါ...";
+        }
+
+        // Data ဆွဲထုတ်ခြင်း
+        db.ref('users/' + targetId).on('value', s => {
+            const data = s.val() || {};
+            document.getElementById('user-email').innerText = isMyProfile ? user.email : "PROFILE_INFO";
+            document.getElementById('username').value = data.username || "အမည်မရှိ";
+            document.getElementById('display-name').innerText = data.username || "User";
+            document.getElementById('age').value = data.age || "";
+            document.getElementById('gender').value = data.gender || "မရွေးရသေး";
+            document.getElementById('birthday').value = data.birthday || "";
+            document.getElementById('bio').value = data.bio || "";
+            
+            const avatarView = document.getElementById('avatar-view');
+            if (data.profilePic && data.profilePic.startsWith('http')) {
+                avatarView.innerHTML = `<img src="${data.profilePic}" style="width:100%; height:100%; object-fit:cover;">`;
+            } else {
+                avatarView.innerHTML = data.profilePic || "👤";
+            }
+        });
     });
 
-    // --- Avatar Upload ---
+    // --- Save & Upload Functions (မူရင်းအတိုင်း) ---
     async function uploadAvatar(input) {
         if (!input.files || !input.files[0]) return;
         const status = document.getElementById('status');
-        status.innerText = "UPLOADING IMAGE...";
-        
+        status.innerText = "UPLOADING...";
         const fd = new FormData();
         fd.append("image", input.files[0]);
-
         try {
-            const res = await fetch("https://api.imgbb.com/1/upload?key=926060156d59194f53e97f7cec5ff5a2", {
-                method: "POST",
-                body: fd
-            });
+            const res = await fetch("https://api.imgbb.com/1/upload?key=926060156d59194f53e97f7cec5ff5a2", {method: "POST", body: fd});
             const resData = await res.json();
             if (resData.success) {
-                const imgUrl = resData.data.url;
-                const user = firebase.auth().currentUser;
-                await db.ref('users/' + user.uid).update({ profilePic: imgUrl });
-                status.innerText = "PHOTO UPDATED!";
-                setTimeout(() => status.innerText = "", 2000);
+                await db.ref('users/' + firebase.auth().currentUser.uid).update({ profilePic: resData.data.url });
+                status.innerText = "UPDATED!";
             }
-        } catch (e) {
-            status.innerText = "UPLOAD FAILED!";
-        }
+        } catch (e) { status.innerText = "FAILED!"; }
     }
 
-    // --- Save Profile ---
     function saveProfile() {
         const user = firebase.auth().currentUser;
-        const btn = document.getElementById('saveBtn');
-        const status = document.getElementById('status');
-
         const updates = {
             username: document.getElementById('username').value,
             age: document.getElementById('age').value,
@@ -173,14 +184,9 @@
             birthday: document.getElementById('birthday').value,
             bio: document.getElementById('bio').value
         };
-
-        btn.disabled = true;
-        status.innerText = "SAVING...";
-
         db.ref('users/' + user.uid).update(updates).then(() => {
-            btn.disabled = false;
-            status.innerText = "PROFILE UPDATED SUCCESSFULLY!";
-            setTimeout(() => status.innerText = "", 2000);
+            document.getElementById('status').innerText = "SAVED!";
+            setTimeout(() => document.getElementById('status').innerText = "", 2000);
         });
     }
 </script>
