@@ -16,7 +16,6 @@
         .nav-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .nav-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
         
-        /* ခလုတ်များ တစ်တန်းတည်းဖြစ်စေရန် */
         .nav-bar-row { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #222; padding-top: 8px; }
         .nav-tabs { display: flex; gap: 15px; }
         .tab { font-size: 12px; color: #888; cursor: pointer; padding: 5px 0; white-space: nowrap; }
@@ -112,6 +111,26 @@
     <div id="feed"></div>
 </div>
 
+<div id="ai-chat-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000; font-family: 'Courier New', monospace;">
+    <div id="ai-toggle" onclick="toggleAIChat()" style="width: 50px; height: 50px; background: #00ff41; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 0 15px #00ff41;">
+        <span style="font-size: 25px;">🤖</span>
+    </div>
+
+    <div id="ai-window" style="display: none; width: 300px; height: 400px; background: #000; border: 2px solid #00ff41; border-radius: 10px; flex-direction: column; overflow: hidden; margin-bottom: 10px;">
+        <div style="background: #00ff41; color: #000; padding: 10px; font-weight: bold; font-size: 14px; display: flex; justify-content: space-between;">
+            <span>ARAKHA_ASSISTANT</span>
+            <span onclick="toggleAIChat()" style="cursor:pointer;">X</span>
+        </div>
+        <div id="ai-messages" style="flex: 1; padding: 10px; overflow-y: auto; font-size: 12px; color: #00ff41;">
+            <div>🤖: ဗျာလ်လို့ခေါ်ပါရေ ကိုကို။</div>
+        </div>
+        <div style="padding: 10px; border-top: 1px solid #333; display: flex; gap: 5px;">
+            <input type="text" id="ai-input" placeholder="မေးကြည့်မေ..." style="flex: 1; background: #111; border: 1px solid #00ff41; color: #00ff41; padding: 5px; font-size: 12px;">
+            <button onclick="askAI()" style="background: #00ff41; color: #000; border: none; padding: 5px 10px; cursor: pointer; font-size: 10px; font-weight: bold;">SEND</button>
+        </div>
+    </div>
+</div>
+
 <script>
     // --- 1. Matrix Background ---
     const canvas = document.getElementById('matrix-canvas');
@@ -155,11 +174,7 @@
         const limit = 200;
         if (text.length <= limit) return text;
         const shortText = text.substring(0, limit);
-        return `
-            <span id="short-${postId}">${shortText}...</span>
-            <span id="full-${postId}" style="display:none;">${text}</span>
-            <a href="javascript:void(0)" id="btn-${postId}" onclick="toggleReadMore('${postId}')" style="color:#00ff41; font-size:12px; text-decoration:none;"> [Read More]</a>
-        `;
+        return `<span id="short-${postId}">${shortText}...</span><span id="full-${postId}" style="display:none;">${text}</span><a href="javascript:void(0)" id="btn-${postId}" onclick="toggleReadMore('${postId}')" style="color:#00ff41; font-size:12px; text-decoration:none;"> [Read More]</a>`;
     }
 
     function toggleReadMore(postId) {
@@ -213,14 +228,7 @@
                         `<img src="${rU.profilePic}" style="width:20px; height:20px; border-radius:50%; object-fit:cover; vertical-align:middle; border:1px solid #444;">` : 
                         `<span style="font-size:14px; vertical-align:middle;">${rU.profilePic || '👤'}</span>`;
 
-                    repliesHTML += `
-                        <div style="margin-top:8px; font-size:13px; color:#ccc;">
-                            ${replyAvatar} 
-                            <a href="profile.html?id=${r.uid}" style="color:#00ff41; text-decoration:none; font-weight:bold;">
-                                @${rU.username || r.u}:
-                            </a> 
-                            <span style="color:#eee;">${r.m}</span>
-                        </div>`;
+                    repliesHTML += `<div style="margin-top:8px; font-size:13px; color:#ccc;">${replyAvatar} <a href="profile.html?id=${r.uid}" style="color:#00ff41; text-decoration:none; font-weight:bold;">@${rU.username || r.u}:</a> <span style="color:#eee;">${r.m}</span></div>`;
                 });
             }
 
@@ -304,7 +312,7 @@
     }
     function goToProfile() { const u = firebase.auth().currentUser; if(u) window.location.href = "profile.html?id=" + u.uid; }
 
-    // --- 6. Auth & Presence & DM Notification ---
+    // --- 6. Auth & Presence ---
     firebase.auth().onAuthStateChanged(user => {
         if (!user) window.location.href = "index.html";
         else {
@@ -316,13 +324,15 @@
                 document.getElementById('user-display').innerText = "အသုံးပြုသူ - " + (data.username || user.email.split('@')[0]); 
             });
 
-            // စာအသစ်ဝင်လျှင် အနီစက်ပြရန်
             db.ref('dms').on('value', snapshot => {
                 let hasNew = false;
                 snapshot.forEach(room => {
                     if (room.key.includes(user.uid)) {
-                        const msgs = Object.values(room.val());
-                        if (msgs[msgs.length - 1].sender !== user.uid) hasNew = true;
+                        const val = room.val();
+                        if(val) {
+                            const msgs = Object.values(val);
+                            if (msgs.length > 0 && msgs[msgs.length - 1].sender !== user.uid) hasNew = true;
+                        }
                     }
                 });
                 document.getElementById('dm-alert').style.display = hasNew ? 'block' : 'none';
@@ -341,103 +351,43 @@
             firebase.auth().signOut().then(() => window.location.href = "index.html");
         } 
     }
-    // AI Window ပိတ်/ဖွင့် လုပ်ဖို့
-function toggleAIChat() {
-    const win = document.getElementById('ai-window');
-    win.style.display = (win.style.display === 'none' || win.style.display === '') ? 'flex' : 'none';
-}
 
-async function askAI() {
-    const input = document.getElementById('ai-input');
-    const msgDiv = document.getElementById('ai-messages');
-    const userMsg = input.value.trim();
+    // --- 7. AI Chatbot Functions ---
+    function toggleAIChat() {
+        const win = document.getElementById('ai-window');
+        win.style.display = (win.style.display === 'none' || win.style.display === '') ? 'flex' : 'none';
+    }
 
-    if (!userMsg) return;
+    async function askAI() {
+        const input = document.getElementById('ai-input');
+        const msgDiv = document.getElementById('ai-messages');
+        const userMsg = input.value.trim();
+        if (!userMsg) return;
 
-    // User ရဲ့ စာကို အရင်ပြမယ်
-    msgDiv.innerHTML += `<div style="color: #fff; margin-top: 5px;">👤: ${userMsg}</div>`;
-    input.value = "";
-    msgDiv.scrollTop = msgDiv.scrollHeight;
+        msgDiv.innerHTML += `<div style="color: #fff; margin-top: 5px;">👤: ${userMsg}</div>`;
+        input.value = "";
+        msgDiv.scrollTop = msgDiv.scrollHeight;
 
-    const apiKey = "AIzaSyCO6AnWclvWyByCcRjsenFOTgwEQh_gyXs"; 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        const apiKey = "AIzaSyCO6AnWclvWyByCcRjsenFOTgwEQh_gyXs"; 
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        const promptInstructions = `You are a helpful assistant for ARAKHA_FORUM. Rule 1: Always reply in Rakhine language (Rakhine dialect) using Myanmar Unicode script. Rule 2: Use friendly terms like 'ကိုကို', 'ညီလေး', 'အချေ'. Rule 3: If asked about tech, explain simply in Rakhine. User message: `;
 
-    // --- ရက္ခိုင်လို ပြန်ဖြေဖို့ PROMPT ဒီမှာ ထည့်လိုက်ပြီ ---
-    const promptInstructions = `You are a helpful assistant for ARAKHA_FORUM. 
-    Rule 1: Always reply in Rakhine language (Rakhine dialect) using Myanmar Unicode script.
-    Rule 2: Use friendly terms like 'ကိုကို', 'ညီလေး', 'အချေ'.
-    Rule 3: If asked about tech, explain simply in Rakhine.
-    User message: `;
-
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ 
-                    parts: [{ text: promptInstructions + userMsg }] 
-                }]
-            })
-        });
-
-        const data = await response.json();
-        
-        if (data.candidates && data.candidates[0].content.parts[0].text) {
-            const aiResponse = data.candidates[0].content.parts[0].text;
-            msgDiv.innerHTML += `<div style="margin-top: 5px; line-height: 1.5;">🤖: ${aiResponse}</div>`;
-        } else {
-            throw new Error("Invalid Response");
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: promptInstructions + userMsg }] }] })
+            });
+            const data = await response.json();
+            if (data.candidates && data.candidates[0].content.parts[0].text) {
+                const aiResponse = data.candidates[0].content.parts[0].text;
+                msgDiv.innerHTML += `<div style="margin-top: 5px; line-height: 1.5;">🤖: ${aiResponse}</div>`;
+            } else { throw new Error("Invalid"); }
+        } catch (error) {
+            msgDiv.innerHTML += `<div style="color: red; margin-top: 5px;">🤖: အမှားတစ်ခု ဖြစ်လားပါရေ ကိုကို။</div>`;
         }
-
-    } catch (error) {
-        msgDiv.innerHTML += `<div style="color: red; margin-top: 5px;">🤖: အမှားတစ်ခု ဖြစ်လားပါရေ ကိုကို။ Key ဒါမှမဟုတ် လိုင်းကို စစ်ကြည့်ပါဦး။</div>`;
-        console.error(error);
+        msgDiv.scrollTop = msgDiv.scrollHeight;
     }
-    msgDiv.scrollTop = msgDiv.scrollHeight;
-}
-
-    const apiKey = "AIzaSyCO6AnWclvWyByCcRjsenFOTgwEQh_gyXs"; // ကိုကို့ Key
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: userMsg + " (Please reply in Myanmar language)" }] }]
-            })
-        });
-
-        const data = await response.json();
-        const aiResponse = data.candidates[0].content.parts[0].text;
-
-        // AI ရဲ့ အဖြေကို ပြမယ်
-        msgDiv.innerHTML += `<div style="margin-top: 5px;">🤖: ${aiResponse}</div>`;
-    } catch (error) {
-        msgDiv.innerHTML += `<div style="color: red; margin-top: 5px;">🤖: Error - Key မရတော့ဘူး ထင်တယ် ကိုကို။</div>`;
-        console.error(error);
-    }
-    msgDiv.scrollTop = msgDiv.scrollHeight;
-}
 </script>
-    <div id="ai-chat-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000; font-family: 'Courier New', monospace;">
-    <div id="ai-toggle" onclick="toggleAIChat()" style="width: 50px; height: 50px; background: #00ff41; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 0 15px #00ff41;">
-        <span style="font-size: 25px;">🤖</span>
-    </div>
-
-    <div id="ai-window" style="display: none; width: 300px; height: 400px; background: #000; border: 2px solid #00ff41; border-radius: 10px; flex-direction: column; overflow: hidden; margin-bottom: 10px;">
-        <div style="background: #00ff41; color: #000; padding: 10px; font-weight: bold; font-size: 14px; display: flex; justify-content: space-between;">
-            <span>ARAKHA_ASSISTANT</span>
-            <span onclick="toggleAIChat()" style="cursor:pointer;">X</span>
-        </div>
-        <div id="ai-messages" style="flex: 1; padding: 10px; overflow-y: auto; font-size: 12px; color: #00ff41;">
-            <div>🤖: ဗျာလ်လို့ခေါ်ပါရေ</div>
-        </div>
-        <div style="padding: 10px; border-top: 1px solid #333; display: flex; gap: 5px;">
-            <input type="text" id="ai-input" placeholder="မေးကြည့်မေ..." style="flex: 1; background: #111; border: 1px solid #00ff41; color: #00ff41; padding: 5px; font-size: 12px;">
-            <button onclick="askAI()" style="background: #00ff41; color: #000; border: none; padding: 5px 10px; cursor: pointer; font-size: 10px; font-weight: bold;">SEND</button>
-        </div>
-    </div>
-</div>
 </body>
 </html>
