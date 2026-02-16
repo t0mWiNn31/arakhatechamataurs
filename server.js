@@ -21,32 +21,39 @@ app.get('/test', (req, res) => {
 
 app.post('/ask', async (req, res) => {
     const userMsg = req.body.message;
-    // URL ကို v1 လို့ ပြောင်းထားပါတယ်
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    // URL format ကို သေချာပြန်စစ်ထားပါတယ်
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
     
     try {
         const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: "Always reply in Rakhine language: " + userMsg }] }]
+                contents: [{
+                    parts: [{
+                        text: "Reply in Rakhine language: " + userMsg 
+                    }]
+                }]
             })
         });
 
         const data = await response.json();
 
+        // Google က ပေးတဲ့ error အစစ်ကို သိရအောင် console မှာ ထုတ်ကြည့်မယ်
         if (data.error) {
+            console.log("Google Error:", data.error);
             return res.status(400).json({ error: data.error.message });
         }
 
+        // Response ရှိမရှိ အဆင့်ဆင့် စစ်ဆေးမယ်
         if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts) {
             const aiText = data.candidates[0].content.parts[0].text;
             res.json({ reply: aiText });
         } else {
-            res.status(500).json({ error: "AI ဆီက အဖြေ မထွက်လာပါဘူး ကိုကို။" });
+            res.status(500).json({ error: "No response from AI Model. Please try again." });
         }
     } catch (error) {
-        res.status(500).json({ error: "Internal Error: " + error.message });
+        res.status(500).json({ error: "Server Error: " + error.message });
     }
 });
 // Render ရဲ့ Port သို့မဟုတ် Port 3000 မှာ Run မယ်
