@@ -358,42 +358,28 @@
         win.style.display = (win.style.display === 'none' || win.style.display === '') ? 'flex' : 'none';
     }
 
-   // --- 7. AI Chatbot Functions (ကိုကို့ Key အသစ်နဲ့ ပြင်ပေးထားပါတယ်) ---
 async function askAI() {
     const input = document.getElementById('ai-input');
     const msgDiv = document.getElementById('ai-messages');
     const userMsg = input.value.trim();
     if (!userMsg) return;
 
-    // User ရဲ့ စာကို ပြမယ်
     msgDiv.innerHTML += `<div style="color: #fff; margin-top: 5px;">👤: ${userMsg}</div>`;
     input.value = "";
-    msgDiv.scrollTop = msgDiv.scrollHeight;
-
-    // ကိုကိုပေးတဲ့ Key အသစ်စက်စက်
-    const apiKey = "AIzaSyB63jrk5SPwZyULGyi6lJIp2q0oIDFT9lQ"; 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-    
-    // ရက္ခိုင်လို ပြောဖို့ Prompt
-    const promptInstructions = `You are a helpful assistant for ARAKHA_FORUM. Rule 1: Always reply in Rakhine language (Rakhine dialect) using Myanmar Unicode script. Rule 2: Use friendly terms like 'အစ်ကို', 'ညီချေ', 'အချေ'. Rule 3: If asked about tech, explain simply in Rakhine. User message: `;
 
     try {
-        const response = await fetch(url, {
+        // Render ပေါ်မှာ Backend ရော Frontend ရော အတူတူရှိနေလို့ /ask လို့ပဲ ခေါ်ရုံပါပဲ
+        const response = await fetch("/ask", { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: promptInstructions + userMsg }] }] })
+            body: JSON.stringify({ message: userMsg })
         });
-        const data = await response.json();
         
-        if (data.candidates && data.candidates[0].content.parts[0].text) {
-            const aiResponse = data.candidates[0].content.parts[0].text;
-            msgDiv.innerHTML += `<div style="margin-top: 5px; line-height: 1.5;">🤖: ${aiResponse}</div>`;
-        } else { 
-            throw new Error("Invalid Response"); 
-        }
+        const data = await response.json();
+        const aiResponse = data.candidates[0].content.parts[0].text;
+        msgDiv.innerHTML += `<div style="margin-top: 5px; line-height: 1.5;">🤖: ${aiResponse}</div>`;
     } catch (error) {
-        msgDiv.innerHTML += `<div style="color: red; margin-top: 5px;">🤖: အမှားတစ်ခု ဖြစ်လားပါရေ </div>`;
-        console.error(error);
+        msgDiv.innerHTML += `<div style="color: red; margin-top: 5px;">🤖: Backend ချိတ်လို့မရပါ ကိုကို။</div>`;
     }
     msgDiv.scrollTop = msgDiv.scrollHeight;
 }
