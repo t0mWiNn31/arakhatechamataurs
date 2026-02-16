@@ -375,14 +375,19 @@ async function askAI() {
             body: JSON.stringify({ message: userMsg })
         });
         
-        const data = await response.json();
+       const data = await response.json();
         
-        if (data.candidates && data.candidates[0].content.parts[0].text) {
-            const aiResponse = data.candidates[0].content.parts[0].text;
+        // Backend က 'reply' ဆိုတဲ့ key နဲ့ ပို့ပေးထားတာကို ဖတ်မယ်
+        if (data.reply) {
+            const aiResponse = data.reply;
             msgDiv.innerHTML += `<div style="margin-top: 5px; line-height: 1.5;">🤖: ${aiResponse}</div>`;
+        } else if (data.error) {
+            // Google က Error တစ်ခုခု ပြန်လာရင် ပြပေးဖို့
+            msgDiv.innerHTML += `<div style="color: orange; margin-top: 5px;">🤖: Error - ${data.error}</div>`;
         } else {
-            throw new Error("Invalid Response");
+            throw new Error("Invalid Response Structure");
         }
+
     } catch (error) {
         msgDiv.innerHTML += `<div style="color: red; margin-top: 5px;">🤖: Backend ချိတ်လို့မရပါ ကိုကို။ (Link စစ်ပေးပါ)</div>`;
         console.error("Error details:", error);
